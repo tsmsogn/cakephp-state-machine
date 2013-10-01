@@ -1,0 +1,45 @@
+language: php
+
+php:
+  - 5.3
+  - 5.4
+  - 5.5
+
+env:
+  global:
+    - REPO_NAME=cakephp-state-machine
+    - PLUGIN_NAME=StateMachine
+  matrix:
+    - CAKE_VERSION=2.2.0
+    - CAKE_VERSION=2.3.0
+    - CAKE_VERSION=2.4.0
+
+before_install:
+  - composer self-update
+
+install:
+  - pear channel-discover pear.cakephp.org
+  - pear install --alldeps cakephp/CakePHP_CodeSniffer
+  - phpenv rehash
+
+before_script:
+  - cd ..
+  - git clone git://github.com/cakephp/cakephp cakephp
+  - cd cakephp
+  - git checkout $CAKE_VERSION
+  - chmod -R 770 app/tmp
+  - cp -R ../$REPO_NAME app/Plugin/$PLUGIN_NAME
+  - echo "CakePlugin::load('$PLUGIN_NAME');" >> app/Config/bootstrap.php
+script:
+  - cd app/
+  - mkdir -p build/logs
+  - phpcs --standard=CakePHP --ignore=*/vendor/* Plugin/$PLUGIN_NAME
+  - ./Console/cake test $PLUGIN_NAME StateMachine/Model/Behavior/StateMachineBehavior --stderr --coverage-clover build/logs/clover.xml
+
+after_script:
+  - php Plugin/$PLUGIN_NAME/vendor/bin/coveralls -v
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover --repository g/$TRAVIS_REPO_SLUG --revision $TRAVIS_COMMIT build/logs/clover.xml
+
+notifications:
+  email: false

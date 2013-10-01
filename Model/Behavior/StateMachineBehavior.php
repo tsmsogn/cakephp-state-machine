@@ -1,5 +1,8 @@
 <?php
-App::uses('ModelBehavior', 'Model');
+/**
+ * StateMachineBehavior
+ * @author David Steinsland
+ */
 App::uses('Model', 'Model');
 App::uses('Inflector', 'Utility');
 
@@ -59,12 +62,12 @@ class StateMachineBehavior extends ModelBehavior {
 					return false;
 				}
 
-				$this->callListeners($transition, 'before');
+				$this->_callListeners($transition, 'before');
 
 				$this->previousState = $this->currentState;
 				$this->currentState = $statesTo;
 
-				$this->callListeners($transition, 'after');
+				$this->_callListeners($transition, 'after');
 
 				if (isset($this->stateListeners[$this->currentState])) {
 					foreach ($this->stateListeners[$this->currentState] as $cb) {
@@ -85,6 +88,9 @@ class StateMachineBehavior extends ModelBehavior {
 		$this->methods[$name] = $method;
 	}
 
+/**
+ * @throws BadMethodCallException when method does not exists
+ */
 	protected function _handleMethodCall($type, $method, $args = array()) {
 		if (strlen($type) > 0) {
 			$method = strpos($method, $type) === 0 ? substr($method, strlen($type)) : $method;
@@ -101,14 +107,23 @@ class StateMachineBehavior extends ModelBehavior {
 		throw new BadMethodCallException('Method ' . $formalized . ' does not exists');
 	}
 
+/**
+ * @throws BadMethodCallException when method does not exists
+ */
 	public function transition(Model $model, $transition) {
 		return $this->_handleMethodCall(null, $transition);
 	}
 
+/**
+ * @throws BadMethodCallException when method does not exists
+ */
 	public function is(Model $model, $state) {
 		return $this->_handleMethodCall('is', $state, array($this->currentState));
 	}
 
+/**
+ * @throws BadMethodCallException when method does not exists
+ */
 	public function can(Model $model, $transition) {
 		return $this->_handleMethodCall('can', $transition);
 	}
@@ -145,7 +160,7 @@ class StateMachineBehavior extends ModelBehavior {
 		return $this->currentState;
 	}
 
-	protected function callListeners($transition, $triggerType = 'after') {
+	protected function _callListeners($transition, $triggerType = 'after') {
 		$listeners = array();
 		if (isset($this->transitionListeners[$transition][$triggerType])) {
 			$listeners = $this->transitionListeners[$transition][$triggerType];
