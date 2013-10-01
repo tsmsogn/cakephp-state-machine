@@ -1,5 +1,6 @@
 CakePHP State Machine
 =====================
+[![Build Status](https://travis-ci.org/davidsteinsland/cakephp-state-machine.png?branch=master)](https://travis-ci.org/davidsteinsland/cakephp-state-machine) [![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master)
 
 **This Plugin is still highly developed, and DB integrations is not yet completed. Please do not use this Plugin yet. I will put it on Packagist when a stable release is ready**.
 
