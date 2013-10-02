@@ -7,6 +7,25 @@ Documentation is not finished yet either. See the tests if you want to learn som
 ## What is a State Machine?
 http://en.wikipedia.org/wiki/State_machine
 
+## Installation
+First you need to alter the tables of the models you want to use StateMachine:
+```sql
+ALTER TABLE `vehicle` ADD `state` VARCHAR(50);
+ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50);
+```
+
+## Features
+- Callbacks on states and transitions
+- Custom methods may be added to your model
+- `is($state)`, `can($transition)`, `on($transition, 'before|after', callback)` and `when($state, callback)` methods allows you to control the whole flow. `transition($transition)` is used to move between two states.
+
+## Naming conventions
+- Transitions and states in `$transitions` should be **lowercased** and **underscored**. The method names are in turn camelized.
+  
+  Example:
+  `shift_up` => `canShiftUp()` => `shiftUp()`
+  `first_gear` => `isFirstGear()`
+
 ## How to Use
 ```php
 App::uses('StateMachineBehavior', 'StateMachine.Model/Behavior');
