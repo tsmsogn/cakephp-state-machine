@@ -161,6 +161,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testInvalidTransition() {
+		$this->assertFalse($this->Vehicle->getStates('foobar'));
 		$this->assertFalse($this->Vehicle->getStates('baz'));
 		$this->assertFalse($this->Vehicle->baz());
 	}
