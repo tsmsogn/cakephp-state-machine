@@ -31,7 +31,7 @@ before_script:
   - chmod -R 770 app/tmp
   - cp -R ../$REPO_NAME app/Plugin/$PLUGIN_NAME
   - echo "CakePlugin::load('$PLUGIN_NAME');" >> app/Config/bootstrap.php
-  - - set +H
+  - set +H
   - echo "<?php
     class DATABASE_CONFIG {
         public \$default = array(
