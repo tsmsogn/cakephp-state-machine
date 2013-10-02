@@ -204,6 +204,30 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals($this->Vehicle->initialState, $this->Vehicle->getCurrentState());
 	}
 
+	public function testToDot() {
+		$this->assertEquals('digraph finite_state_machine {
+	rankdir=LR
+	fontsize=12
+	node [shape = circle];
+	parked -> idling [ label = "ignite" ];
+	stalled -> stalled [ label = "ignite" ];
+	idling -> parked [ label = "park" ];
+	first_gear -> parked [ label = "park" ];
+	idling -> first_gear [ label = "shift_up" ];
+	first_gear -> second_gear [ label = "shift_up" ];
+	second_gear -> third_gear [ label = "shift_up" ];
+	first_gear -> idling [ label = "shift_down" ];
+	second_gear -> first_gear [ label = "shift_down" ];
+	third_gear -> second_gear [ label = "shift_down" ];
+	first_gear -> stalled [ label = "crash" ];
+	second_gear -> stalled [ label = "crash" ];
+	third_gear -> stalled [ label = "crash" ];
+	stalled -> parked [ label = "repair" ];
+	first_gear -> idling [ label = "idle" ];
+	all -> parked [ label = "turn_off" ];
+}', $this->Vehicle->toDot());
+	}
+
 	public function tearDown() {
 		parent::tearDown();
 		unset($this->Vehicle, $this->StateMachine);

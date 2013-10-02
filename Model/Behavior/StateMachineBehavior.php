@@ -224,6 +224,35 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * Simple method to return contents for a GV file, that
+ * can be made into graphics by:
+ * {{{
+ * dot -Tpng -ofsm.png fsm.gv
+ * }}}
+ * Assuming that the contents are written to the file fsm.gv
+ *
+ * @param	Model	$model	The model being acted on
+ * @return	string			The contents of the graphviz file
+ */
+	public function toDot(Model $model) {
+		$digraph = <<<EOT
+digraph finite_state_machine {
+	rankdir=LR
+	fontsize=12
+	node [shape = circle];
+
+EOT;
+
+		foreach ($model->transitions as $transition => $states) {
+			foreach ($states as $stateFrom => $stateTo) {
+				$digraph .= sprintf("\t%s -> %s [ label = \"%s\" ];\n", $stateFrom, $stateTo, $transition);
+			}
+		}
+
+		return $digraph . "}";
+	}
+
+/**
  * Calls transition listeners before or after a particular transition
  *
  * @param	string	$transition		The transition name

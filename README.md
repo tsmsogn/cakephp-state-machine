@@ -18,6 +18,7 @@ ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50);
 - Callbacks on states and transitions
 - Custom methods may be added to your model
 - `is($state)`, `can($transition)`, `on($transition, 'before|after', callback)` and `when($state, callback)` methods allows you to control the whole flow. `transition($transition)` is used to move between two states.
+- Graphviz
 
 ## Naming conventions
 - Transitions and states in `$transitions` should be **lowercased** and **underscored**. The method names are in turn camelized.
@@ -102,3 +103,7 @@ class Controller .... {
     }
 }
 ```
+
+## Graphivz
+Here's how to state machine of the Vehicle would look like:
+![](fsm.png)
