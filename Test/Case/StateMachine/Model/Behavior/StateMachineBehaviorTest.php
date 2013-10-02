@@ -43,7 +43,8 @@ class VehicleModel extends CakeTestModel {
 		),
 		'turn_off' => array(
 			'all' => 'parked'
-		)
+		),
+		'baz' => array()
 	);
 }
 
@@ -157,6 +158,11 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		});
 
 		$this->Vehicle->ignite();
+	}
+
+	public function testInvalidTransition() {
+		$this->assertFalse($this->Vehicle->getStates('baz'));
+		$this->assertFalse($this->Vehicle->baz());
 	}
 
 	public function tearDown() {
