@@ -51,7 +51,6 @@ class Vehicle extends CakeTestModel {
 class StateMachineBehaviorTest extends CakeTestCase {
 
 	public $fixtures = array(
-		'plugin.state_machine.state',
 		'plugin.state_machine.vehicle'
 	);
 
