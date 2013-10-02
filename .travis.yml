@@ -23,6 +23,7 @@ install:
   - composer install --dev --prefer-source
 
 before_script:
+  - mysql -e 'CREATE DATABASE cakephp_test;'
   - cd ..
   - git clone git://github.com/cakephp/cakephp cakephp
   - cd cakephp
@@ -30,6 +31,28 @@ before_script:
   - chmod -R 770 app/tmp
   - cp -R ../$REPO_NAME app/Plugin/$PLUGIN_NAME
   - echo "CakePlugin::load('$PLUGIN_NAME');" >> app/Config/bootstrap.php
+  - set +H
+  - echo "<?php
+    class DATABASE_CONFIG {
+        public \$default = array(
+            'datasource' => 'Database/Mysql',
+            'persistent' => false,
+            'host' => '0.0.0.0',
+            'login' => 'travis',
+            'password' => '',
+            'database' => 'cakephp_test',
+            'prefix' => ''
+        );
+        public \$test = array(
+            'datasource' => 'Database/Mysql',
+            'persistent' => false,
+            'host' => '0.0.0.0',
+            'login' => 'travis',
+            'password' => '',
+            'database' => 'cakephp_test',
+            'prefix' => ''
+        );
+    }" > app/Config/database.php
 script:
   - cd app/
   - mkdir -p build/logs
