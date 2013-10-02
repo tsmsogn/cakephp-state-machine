@@ -1,11 +1,11 @@
 <?php
 App::uses('StateMachineBehavior', 'StateMachine.Model/Behavior');
 
-class VehicleModel extends CakeTestModel {
+class Vehicle extends CakeTestModel {
 
-	public $useTable = false;
+	public $useTable = 'vehicles';
 
-	public $actAs = array('StateMachine.StateMachine');
+	public $actsAs = array('StateMachine.StateMachine');
 
 	public $stateName = 'Vehicle';
 
@@ -50,13 +50,20 @@ class VehicleModel extends CakeTestModel {
 
 class StateMachineBehaviorTest extends CakeTestCase {
 
+	public $fixtures = array(
+		'plugin.state_machine.state',
+		'plugin.state_machine.vehicle'
+	);
+
 	public $Vehicle;
+
+	public $StateMachine;
 
 	public function setUp() {
 		parent::setUp();
 
-		$this->Vehicle = new VehicleModel();
-		$this->Vehicle->Behaviors->load('StateMachine.StateMachine');
+		$this->Vehicle = new Vehicle(1);
+		$this->StateMachine = $this->Vehicle->Behaviors->StateMachine;
 	}
 
 	public function testHasBehavior() {
@@ -76,6 +83,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testInitialState() {
 		$this->assertEquals("parked", $this->Vehicle->initialState);
+		$this->assertEquals($this->Vehicle->initialState, $this->Vehicle->getCurrentState());
 	}
 
 	public function testIsMethods() {
@@ -122,7 +130,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testBadMethodCall() {
-		$this->setExpectedException('BadMethodCallException');
+		$this->setExpectedException('PDOException');
 		$this->Vehicle->isFoobar();
 	}
 
@@ -166,8 +174,28 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertFalse($this->Vehicle->baz());
 	}
 
+	public function testVehicleTitle() {
+		$this->Vehicle = new Vehicle(3);
+
+		$this->assertEquals("Opel Astra", $this->Vehicle->field('title'));
+		$this->assertEquals("idling", $this->Vehicle->field('state'));
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+		$this->Vehicle->shiftUp();
+		$this->assertEquals("first_gear", $this->Vehicle->field('state'));
+		$this->assertEquals("first_gear", $this->Vehicle->getCurrentState());
+
+		$this->Vehicle = new Vehicle(4);
+		$this->assertEquals("Nissan Leaf", $this->Vehicle->field('title'));
+		$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
+		$this->assertEquals("stalled", $this->Vehicle->field('state'));
+		$this->assertTrue($this->Vehicle->canRepair());
+		$this->assertTrue($this->Vehicle->repair());
+		$this->assertNotEquals("idling", $this->Vehicle->getCurrentState());
+		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+	}
+
 	public function tearDown() {
 		parent::tearDown();
-		unset($this->Vehicle);
+		unset($this->Vehicle, $this->StateMachine);
 	}
 }

@@ -19,57 +19,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @var array
  */
 	public $mapMethods = array(
-		'/is([A-Z][a-zA-Z0-9]+)/' => 'is',
 		'/when([A-Z][a-zA-Z0-9]+)/' => 'when',
-		'/can([A-Z][a-zA-Z0-9]+)/' => 'can',
 		'/on([A-Z][a-zA-Z0-9]+)/' => 'on'
 	);
-
-/**
- * Transition listeners are fired when the state machine goes from one state to another.
- *
- * @see StateMachineBehavior::on()
- * @var array
- */
-	public $transitionListeners = array(
-		'transition' => array(
-			'before' => array(),
-			'after' => array()
-		)
-	);
-
-/**
- * A more generic way of adding state listeners. These are fired after the transition listeners,
- * and after the state has been changed.
- *
- * @see StateMachineBehavior::when()
- * @var array
- */
-	public $stateListeners = array();
-
-/**
- * The current state of the machine
- *
- * @see StateMachineBehavior::getCurrentState()
- * @var string
- */
-	public $currentState;
-
-/**
- * The previous state of the machine
- *
- * @var string
- */
-	public $previousState;
-
-/**
- * All the methods that the state machine has implemented. User defined
- * methods may be added via addMethod().
- *
- * @see StateMachineBehavior::addMethod()
- * @var array
- */
-	public $methods = array();
 
 /**
  * Sets up all the methods that builds up the state machine.
@@ -82,106 +34,61 @@ class StateMachineBehavior extends ModelBehavior {
  * @return void
  */
 	public function setup(Model $model, $config = array()) {
-		parent::setup($model, $config);
+		if (!isset($this->settings[$model->alias])) {
+			$this->settings[$model->alias] = array(
+				'transition_listeners' => array(
+					'transition' => array(
+						'before' => array(),
+						'after' => array()
+					)
+				),
+				'state_listeners' => array()
+			);
+		}
 
-		$this->currentState = $model->initialState;
-		$availableStates = array();
+		$this->_initializeMethods($model);
+	}
 
+/**
+ * Initializes the methods that the model can call
+ * @param	Model	$model	The model being acted on
+ * @return	void
+ */
+	protected function _initializeMethods(Model $model) {
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
-				if (! in_array($stateFrom, $availableStates)) {
-					$availableStates[] = $stateFrom;
+				$methodName = '/is(' . Inflector::camelize($stateFrom) . ')/';
+				if (! isset($this->mapMethods[$methodName])) {
+					$this->mapMethods[$methodName] = 'is';
 				}
 
-				if (! in_array($stateTo, $availableStates)) {
-					$availableStates[] = $stateTo;
+				$methodName = '/is(' . Inflector::camelize($stateTo) . ')/';
+				if (! isset($this->mapMethods[$methodName])) {
+					$this->mapMethods[$methodName] = 'is';
 				}
 			}
 
-			$this->addMethod($model, 'can' . Inflector::camelize($transition), function($func) use($model) {
-				return !!$this->getStates($model, $this->_deFormalizeMethodName($func));
-			});
+			$this->mapMethods['/can(' . Inflector::camelize($transition) . ')/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
 			$this->mapMethods['/(' . $transitionFunction . ')/'] = 'transition';
-
-			$this->addMethod($model, $transitionFunction, function($func) use($model) {
-				$transition = $this->_deFormalizeMethodName($func);
-				$statesTo = $this->getStates($model, $transition);
-
-				if (! $statesTo) {
-					return false;
-				}
-
-				$this->_callListeners($transition, 'before');
-
-				$this->previousState = $this->currentState;
-				$this->currentState = $statesTo;
-
-				$this->_callListeners($transition, 'after');
-
-				if (isset($this->stateListeners[$this->currentState])) {
-					foreach ($this->stateListeners[$this->currentState] as $cb) {
-						$cb();
-					}
-				}
-			});
-		}
-
-		foreach ($availableStates as $state) {
-			$this->addMethod($model, 'is' . Inflector::camelize($state), function($func) {
-				return $this->currentState === $this->_deFormalizeMethodName($func);
-			});
 		}
 	}
 
 /**
- * Creates a method for the State Machine. Can also be used
- * to create a user defined method, like so:
- *
- * {{{
- * $this->Model->addMethod('isMoving', function($f, $currentState) {
- *     return in_array($currentState, array('first_gear', 'second_gear', 'third_gear'));
- * });
- *
- * var_dump($this->Model->isMoving());
- * }}}
- *
- * @param	Model	$model	The model which the behavior belongs to
- * @param	object	$name	The name of the method
- * @param	Closure	$method	The callback which will be fired
- * @return void
+ * Updates the model's state when a $model->save() call is performed
+ * @param	Model	$model		The model being acted on
+ * @param	boolean $created	Whether or not the model was created
+ * @param	array	$options	Options passed to save
+ * @return	boolean
  */
-	public function addMethod(Model $model, $name, Closure $method) {
-		$this->methods[$name] = $method;
-	}
-
-/**
- * Handles method calls to is(), on(), when() and can().
- * Formats the method name such that it is like Inflector::variable()
- *
- * Transition: shift_up => canShiftUp() and shiftUp()
- * State: second_gear   => isSecondGear()
- *
- * @param string $type The type of the method call: can|is|on|when
- * @param string $method The method name
- * @param array $args Arguments for the callback function
- * @throws BadMethodCallException when method does not exists
- */
-	protected function _handleMethodCall($type, $method, $args = array()) {
-		if (strlen($type) > 0) {
-			$method = strpos($method, $type) === 0 ? substr($method, strlen($type)) : $method;
-			$formalized = $type . Inflector::camelize($method);
-		} else {
-			$formalized = Inflector::variable($method);
+	public function afterSave(Model $model, $created, $options = array()) {
+		if ($created) {
+			$model->read();
+			$model->saveField('state', $model->initialState);
 		}
 
-		array_unshift($args, $formalized);
-		if (isset($this->methods[$formalized])) {
-			return call_user_func_array($this->methods[$formalized], $args);
-		}
-
-		throw new BadMethodCallException('Method ' . $formalized . ' does not exists');
+		return true;
 	}
 
 /**
@@ -194,10 +101,31 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $transition The transition being initiated
- * @throws BadMethodCallException when method does not exists
  */
 	public function transition(Model $model, $transition) {
-		return $this->_handleMethodCall(null, $transition);
+		$transition = Inflector::underscore($transition);
+		$statesTo = $this->getStates($model, $transition);
+
+		if (! $statesTo) {
+			return false;
+		}
+
+		$this->_callListeners($model, $transition, 'before');
+
+		$model->read(null, $model->id);
+		$model->set('previous_state', $model->getCurrentState());
+		$model->set('state', $statesTo);
+		$retval = $model->save();
+
+		$this->_callListeners($model, $transition, 'after');
+
+		if (isset($this->settings[$model->alias]['state_listeners'][$statesTo])) {
+			foreach ($this->settings[$model->alias]['state_listeners'][$statesTo] as $cb) {
+				$cb();
+			}
+		}
+
+		return (bool)$retval;
 	}
 
 /**
@@ -209,7 +137,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @throws BadMethodCallException when method does not exists
  */
 	public function is(Model $model, $state) {
-		return $this->_handleMethodCall('is', $state, array($this->currentState));
+		return $this->getCurrentState($model) === $this->_deFormalizeMethodName($state);
 	}
 
 /**
@@ -221,7 +149,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @throws BadMethodCallException when method does not exists
  */
 	public function can(Model $model, $transition) {
-		return $this->_handleMethodCall('can', $transition);
+		return !!$this->getStates($model, $this->_deFormalizeMethodName($transition));
 	}
 
 /**
@@ -235,7 +163,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Boolean	$bubble			Whether or not to bubble other listeners
  */
 	public function on(Model $model, $transition, $triggerType, Closure $cb, $bubble = true) {
-		$this->transitionListeners[strtolower($transition)][$triggerType][] = array(
+		$this->settings[$model->alias]['transition_listeners'][strtolower($transition)][$triggerType][] = array(
 			'cb' => $cb,
 			'bubble' => $bubble
 		);
@@ -250,7 +178,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Closure	$cb		The callback function that will be called
  */
 	public function when(Model $model, $state, Closure $cb) {
-		$this->stateListeners[strtolower($state)][] = $cb;
+		$this->settings[$model->alias]['state_listeners'][strtolower($state)][] = $cb;
 	}
 
 /**
@@ -269,12 +197,12 @@ class StateMachineBehavior extends ModelBehavior {
 		// get the states the machine can move from and to
 		$states = $model->transitions[$transition];
 
-		if (! isset($states[$this->currentState]) && ! isset($states['all'])) {
+		if (! isset($states[$model->getCurrentState()]) && ! isset($states['all'])) {
 			// we canno move from the current state
 			return false;
 		}
 
-		return isset($states[$this->currentState]) ? $states[$this->currentState] : $states['all'];
+		return isset($states[$model->getCurrentState()]) ? $states[$model->getCurrentState()] : $states['all'];
 	}
 
 /**
@@ -283,7 +211,16 @@ class StateMachineBehavior extends ModelBehavior {
  * @return	string			The current state of the machine
  */
 	public function getCurrentState(Model $model) {
-		return $this->currentState;
+		return $model->field('state');
+	}
+
+/**
+ * Returns the previous state of the machine
+ * @param	Model	$model	The model being acted on
+ * @return	string			The previous state of the machine
+ */
+	public function getPreviousState(Model $model) {
+		return $model->field('previous_state');
 	}
 
 /**
@@ -292,16 +229,16 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	string	$transition		The transition name
  * @param	string	$triggerType	Either before or after
  */
-	protected function _callListeners($transition, $triggerType = 'after') {
+	protected function _callListeners(Model $model, $transition, $triggerType = 'after') {
 		$listeners = array();
-		if (isset($this->transitionListeners[$transition][$triggerType])) {
-			$listeners = $this->transitionListeners[$transition][$triggerType];
+		if (isset($this->settings[$model->alias]['transition_listeners'][$transition][$triggerType])) {
+			$listeners = $this->settings[$model->alias]['transition_listeners'][$transition][$triggerType];
 		}
 
-		$listeners = array_merge($listeners, $this->transitionListeners['transition'][$triggerType]);
+		$listeners = array_merge($listeners, $this->settings[$model->alias]['transition_listeners']['transition'][$triggerType]);
 
 		foreach ($listeners as $cb) {
-			$cb['cb']($this->currentState, $this->previousState, $transition);
+			$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
 
 			if (! $cb['bubble']) {
 				break;
