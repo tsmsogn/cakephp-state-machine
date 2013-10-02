@@ -120,6 +120,11 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->Vehicle->ignite();
 	}
 
+	public function testBadMethodCall() {
+		$this->setExpectedException('BadMethodCallException');
+		$this->Vehicle->isFoobar();
+	}
+
 	public function testWhenMethods() {
 		$this->Vehicle->whenStalled(function() {
 			$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
@@ -139,6 +144,19 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertTrue($this->Vehicle->isStalled());
 		$this->Vehicle->repair();
 		$this->assertTrue($this->Vehicle->isParked());
+	}
+
+	public function testBubble() {
+		$this->Vehicle->on('ignite', 'before', function() {
+			$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+		}, false);
+
+		$this->Vehicle->on('transition', 'before', function() {
+			// this should never be called
+			$this->assertTrue(false);
+		});
+
+		$this->Vehicle->ignite();
 	}
 
 	public function tearDown() {
