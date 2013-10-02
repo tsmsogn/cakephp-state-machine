@@ -193,6 +193,17 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
 	}
 
+	public function testCreateVehicle() {
+		$this->Vehicle->create();
+		$this->Vehicle->save(array(
+			'Vehicle' => array(
+				'title' => 'Toybota'
+			)
+		));
+		$this->Vehicle->id = $this->Vehicle->getLastInsertID();
+		$this->assertEquals($this->Vehicle->initialState, $this->Vehicle->getCurrentState());
+	}
+
 	public function tearDown() {
 		parent::tearDown();
 		unset($this->Vehicle, $this->StateMachine);
