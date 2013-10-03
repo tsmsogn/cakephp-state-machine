@@ -1,6 +1,6 @@
 CakePHP State Machine
 =====================
-[![Build Status](https://travis-ci.org/davidsteinsland/cakephp-state-machine.png?branch=master)](https://travis-ci.org/davidsteinsland/cakephp-state-machine) [![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master)
+[![Build Status](https://travis-ci.org/davidsteinsland/cakephp-state-machine.png?branch=master)](https://travis-ci.org/davidsteinsland/cakephp-state-machine) [![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master) [![Scrutinizer Quality Score](https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/badges/quality-score.png?s=7d6d7a43f47401c3a4fda69d799c9d671a8659e3)](https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/) [![Latest Stable Version](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/v/stable.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine) [![Total Downloads](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/downloads.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine)
 
 Documentation is not finished yet either. See the tests if you want to learn something.
 
@@ -18,6 +18,7 @@ ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50);
 - Callbacks on states and transitions
 - Custom methods may be added to your model
 - `is($state)`, `can($transition)`, `on($transition, 'before|after', callback)` and `when($state, callback)` methods allows you to control the whole flow. `transition($transition)` is used to move between two states.
+- Roles and rules
 - Graphviz
 
 ## Naming conventions
@@ -38,6 +39,13 @@ class VehicleModel extends AppModel {
 	public $actsAs = array('StateMachine.StateMachine');
 
 	public $initialState = 'parked';
+
+	public $transitionRules = array(
+        'ignite' => array(
+ 			'role' => array('driver'),
+			'depends' => 'has_key'
+		)
+	);
 
 	public $transitions = array(
 		'ignite' => array(
@@ -84,6 +92,11 @@ class VehicleModel extends AppModel {
     public function isMoving() {
         return in_array($this->getCurrentState(), array('first_gear', 'second_gear', 'third_gear'));
     }
+
+	public function hasKey($role) {
+		return $role == 'driver';
+	}
+
 }
 ```
 
@@ -97,13 +110,22 @@ class Controller .... {
             )
         ));
         // $this->Vehicle->getCurrentState() == 'parked'
-        $this->Vehicle->ignite();
-        $this->Vehicle->shiftUp();
-        // $this->Vehicle->getCurrentState() == 'first_gear'
+		if ($this->Vehicle->canIgnite('driver')) {
+       	 	$this->Vehicle->ignite('driver');
+       		$this->Vehicle->shiftUp();
+        	// $this->Vehicle->getCurrentState() == 'first_gear'
+		}
     }
 }
 ```
 
 ## Graphivz
-Here's how to state machine of the Vehicle would look like:
+Here's how to state machine of the Vehicle would look like if you saved:
+```php
+$model->toDot()
+```
+into `fsm.gv` and ran:
+```sh
+dot -Tpng -ofsm.png fsm.gv
+```
 ![](fsm.png)
