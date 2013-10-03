@@ -80,6 +80,10 @@ class RulesVehicle extends BaseVehicle {
 		'park'	=> array(
 			'role' => array('driver', 'thief'),
 			'depends' => 'available_parking'
+		),
+		'repair' => array(
+			'role' => array('mechanic'),
+			'depends' => 'has_tools'
 		)
 	);
 
@@ -193,14 +197,16 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->Vehicle->isFoobar();
 	}
 
+	public function whenParked() {
+		$this->assertEquals('parked', $this->Vehicle->getCurrentState());
+	}
+
 	public function testWhenMethods() {
 		$this->Vehicle->whenStalled(function() {
 			$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
 		});
 
-		$this->Vehicle->when('parked', function() {
-			$this->assertEquals('parked', $this->Vehicle->getCurrentState());
-		});
+		$this->Vehicle->when('parked', array($this, 'whenParked'));
 
 		$this->assertTrue($this->Vehicle->isParked());
 		$this->Vehicle->ignite();
@@ -276,6 +282,15 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("Vehicle-Toybota", $this->Vehicle->whatIsMyName("Toybota"));
 	}
 
+	public function testExistingCallable() {
+		$this->Vehicle->addMethod('foobar', function() {
+		});
+
+		$this->setExpectedException('InvalidArgumentException');
+		$this->Vehicle->addMethod('foobar', function() {
+		});
+	}
+
 	public function testUnhandled() {
 		$this->setExpectedException('PDOException');
 		$this->assertEquals(array("unhandled"), $this->Vehicle->handleMethodCall("foobar"));
@@ -299,6 +314,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testRules() {
 		$this->Vehicle = new RulesVehicle(1);
+
 		$this->assertTrue($this->Vehicle->canIgnite('driver'));
 		$this->assertFalse($this->Vehicle->canIgnite('thief'));
 		$this->assertTrue($this->Vehicle->canHardwire('thief'));
@@ -308,6 +324,20 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 		$this->assertFalse($this->Vehicle->canPark('driver'));
 		$this->assertTrue($this->Vehicle->canPark('thief'));
+	}
+
+	public function testRuleWithCallback() {
+		$this->Vehicle = new RulesVehicle(1);
+		$this->Vehicle->ignite('driver');
+		$this->Vehicle->shiftUp();
+		$this->Vehicle->crash();
+
+		$this->Vehicle->addMethod('hasTools', function($role) {
+			return $role == 'mechanic';
+		});
+
+		$this->assertTrue($this->Vehicle->canRepair('mechanic'));
+		$this->assertTrue($this->Vehicle->repair('mechanic'));
 	}
 
 	public function testInvalidRules() {

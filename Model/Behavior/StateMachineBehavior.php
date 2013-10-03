@@ -58,21 +58,20 @@ class StateMachineBehavior extends ModelBehavior {
 	protected function _initializeMethods(Model $model) {
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
-				$methodName = '/is(' . Inflector::camelize($stateFrom) . ')/';
-				if (! isset($this->mapMethods[$methodName])) {
-					$this->mapMethods[$methodName] = 'is';
-				}
-
-				$methodName = '/is(' . Inflector::camelize($stateTo) . ')/';
-				if (! isset($this->mapMethods[$methodName])) {
-					$this->mapMethods[$methodName] = 'is';
+				foreach (array(
+					'is' . Inflector::camelize($stateFrom),
+					'is' . Inflector::camelize($stateTo)
+				) as $methodName) {
+					if (! $this->_hasMethod($model, $methodName)) {
+						$this->mapMethods['/' . $methodName . '/'] = 'is';
+					}
 				}
 			}
 
-			$this->mapMethods['/can(' . Inflector::camelize($transition) . ')/'] = 'can';
+			$this->mapMethods['/can' . Inflector::camelize($transition) . '/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
-			$this->mapMethods['/(' . $transitionFunction . ')/'] = 'transition';
+			$this->mapMethods['/' . $transitionFunction . '/'] = 'transition';
 		}
 	}
 
@@ -86,14 +85,30 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Model		$model	The model being acted on
  * @param	string		$method	The method na,e
  * @param	Callable	$cb		The callback to execute
+ * @throws	InvalidArgumentException	If the method already is registered
  * @return	void
  */
 	public function addMethod(Model $model, $method, Callable $cb) {
+		if ($this->_hasMethod($model, $method)) {
+			throw new InvalidArgumentException("A method with the same name is already registered");
+		}
+
 		$this->settings[$model->alias]['methods'][$method] = $cb;
 		$this->mapMethods['/' . $method . '/'] = 'handleMethodCall';
 
 		// force model to re-load Behavior, so that the mapMethods are working correctly
 		$model->Behaviors->load('Statemachine.StateMachine');
+	}
+
+/**
+ * Checks whether or not a user-defined method exists in the Behavior
+ *
+ * @param	Model	$model	The model being acted on
+ * @param	string	$method	The method's name
+ * @return	boolean			True if the method exists, false otherwise
+ */
+	protected function _hasMethod(Model $model, $method) {
+		return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
 	}
 
 /**
@@ -151,14 +166,14 @@ class StateMachineBehavior extends ModelBehavior {
 			return false;
 		}
 
-		$this->_callListeners($model, $transition, 'before');
+		$this->_callTransitionListeners($model, $transition, 'before');
 
 		$model->read(null, $model->id);
 		$model->set('previous_state', $model->getCurrentState());
 		$model->set('state', $statesTo);
 		$retval = $model->save();
 
-		$this->_callListeners($model, $transition, 'after');
+		$this->_callTransitionListeners($model, $transition, 'after');
 		$this->_callStateListeners($model, $statesTo);
 
 		return (bool)$retval;
@@ -187,14 +202,21 @@ class StateMachineBehavior extends ModelBehavior {
 			return false;
 		}
 
-		if (isset($model->transitionRules[$transition]['depends'])) {
-			$callback = $model->transitionRules[$transition]['depends'];
-			if (! call_user_func(array($model, Inflector::variable($callback)), $role)) {
-				return false;
-			}
+		if (! isset($model->transitionRules[$transition]['depends'])) {
+			return true;
 		}
 
-		return true;
+		$callback = Inflector::variable($model->transitionRules[$transition]['depends']);
+
+		if ($this->_hasMethod($model, $callback)) {
+			// Fix: if the method is supplied as an anonymous callback, we cannot call
+			// it from the model directly
+			$res = $this->settings[$model->alias]['methods'][$callback]($role);
+		} else {
+			$res = call_user_func(array($model, $callback), $role);
+		}
+
+		return $res;
 	}
 
 /**
@@ -240,10 +262,10 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Model	$model			The model being acted on
  * @param	string	$transition		The transition to listen to
  * @param	string	$triggerType	Either before or after
- * @param	Closure	$cb				The callback function that will be called
+ * @param	Callable	$cb				The callback function that will be called
  * @param	Boolean	$bubble			Whether or not to bubble other listeners
  */
-	public function on(Model $model, $transition, $triggerType, Closure $cb, $bubble = true) {
+	public function on(Model $model, $transition, $triggerType, Callable $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][strtolower($transition)][$triggerType][] = array(
 			'cb' => $cb,
 			'bubble' => $bubble
@@ -256,9 +278,9 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param	Model	$model	The model being acted on
  * @param	string	$state	The state which the machine should enter
- * @param	Closure	$cb		The callback function that will be called
+ * @param	Callable	$cb		The callback function that will be called
  */
-	public function when(Model $model, $state, Closure $cb) {
+	public function when(Model $model, $state, Callable $cb) {
 		$this->settings[$model->alias]['state_listeners'][strtolower($state)][] = $cb;
 	}
 
@@ -344,7 +366,7 @@ EOT;
  * @param	string	$transition		The transition name
  * @param	string	$triggerType	Either before or after
  */
-	protected function _callListeners(Model $model, $transition, $triggerType = 'after') {
+	protected function _callTransitionListeners(Model $model, $transition, $triggerType = 'after') {
 		$listeners = array();
 		if (isset($this->settings[$model->alias]['transition_listeners'][$transition][$triggerType])) {
 			$listeners = $this->settings[$model->alias]['transition_listeners'][$transition][$triggerType];
@@ -352,32 +374,20 @@ EOT;
 
 		$listeners = array_merge($listeners, $this->settings[$model->alias]['transition_listeners']['transition'][$triggerType]);
 
-		if (method_exists($model, 'on' . Inflector::camelize($triggerType . 'Transition'))) {
-			$listeners[] = array(
-				'cb' => array(
-					$model,
-					'on' . Inflector::camelize($triggerType . 'Transition')
-				),
-				'bubble' => true
-			);
-		}
-
-		if (method_exists($model, 'on' . Inflector::camelize($triggerType . $transition))) {
-			$listeners[] = array(
-				'cb' => array(
-					$model,
-					'on' . Inflector::camelize($triggerType . $transition)
-				),
-				'bubble' => true
-			);
+		foreach (array(
+			'on' . Inflector::camelize($triggerType . 'Transition'),
+			'on' . Inflector::camelize($triggerType . $transition)
+		) as $method) {
+			if (method_exists($model, $method)) {
+				$listeners[] = array(
+					'cb' => array($model, $method),
+					'bubble' => true
+				);
+			}
 		}
 
 		foreach ($listeners as $cb) {
-			if (is_array($cb['cb']) && method_exists($cb['cb'][0], $cb['cb'][1])) {
-				call_user_func($cb['cb'], $this->getCurrentState($model), $this->getPreviousState($model), $transition);
-			} elseif ($cb['cb'] instanceof Closure) {
-				$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
-			}
+			$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
 
 			if (! $cb['bubble']) {
 				break;
@@ -399,20 +409,17 @@ EOT;
 			$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
 		}
 
-		if (method_exists($model, 'onState' . Inflector::camelize($state))) {
-			$stateListeners[] = array($model, 'onState' . Inflector::camelize($state));
-		}
-
-		if (method_exists($model, 'onStateChange')) {
-			$stateListeners[] = array($model, 'onStateChange');
+		foreach (array(
+			'onState' . Inflector::camelize($state),
+			'onStateChange'
+		) as $method) {
+			if (method_exists($model, $method)) {
+				$stateListeners[] = array($model, $method);
+			}
 		}
 
 		foreach ($stateListeners as $cb) {
-			if (is_array($cb) && method_exists($cb[0], $cb[1])) {
-				call_user_func($cb, $state);
-			} elseif ($cb instanceof Closure || is_callable($cb)) {
-				$cb($state);
-			}
+			$cb($state);
 		}
 	}
 
