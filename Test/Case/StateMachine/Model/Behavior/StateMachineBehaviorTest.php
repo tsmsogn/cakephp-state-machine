@@ -7,8 +7,6 @@ class BaseVehicle extends CakeTestModel {
 
 	public $actsAs = array('StateMachine.StateMachine');
 
-	public $stateName = 'Vehicle';
-
 	public $initialState = 'parked';
 
 	public $transitions = array(
@@ -129,51 +127,35 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->StateMachine = $this->Vehicle->Behaviors->StateMachine;
 	}
 
-	public function testHasBehavior() {
-		$this->assertTrue($this->Vehicle->Behaviors->enabled('StateMachine'));
-	}
-
-	public function testMappedMethods() {
-		$this->assertTrue($this->Vehicle->Behaviors->hasMethod('isParked'));
-		$this->assertTrue($this->Vehicle->Behaviors->hasMethod('canPark'));
-		$this->assertTrue($this->Vehicle->Behaviors->hasMethod('onPark'));
-		$this->assertTrue($this->Vehicle->Behaviors->hasMethod('whenParked'));
-	}
-
-	public function testStateName() {
-		$this->assertEquals("Vehicle", $this->Vehicle->stateName);
-	}
-
 	public function testInitialState() {
-		$this->assertEquals("parked", $this->Vehicle->initialState);
-		$this->assertEquals($this->Vehicle->initialState, $this->Vehicle->getCurrentState());
+		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+		$this->assertEquals('parked', $this->Vehicle->getStates('turn_off'));
 	}
 
 	public function testIsMethods() {
 		$this->assertEquals($this->Vehicle->isParked(), $this->Vehicle->is('parked'));
-		$this->assertTrue($this->Vehicle->isParked());
-
 		$this->assertEquals($this->Vehicle->isIdling(), $this->Vehicle->is('idling'));
-		$this->assertFalse($this->Vehicle->isIdling());
-
 		$this->assertEquals($this->Vehicle->isStalled(), $this->Vehicle->is('stalled'));
-		$this->assertFalse($this->Vehicle->isStalled());
-
 		$this->assertEquals($this->Vehicle->isIdling(), $this->Vehicle->is('idling'));
-		$this->assertFalse($this->Vehicle->isIdling());
-	}
 
-	public function testCanMethods() {
 		$this->assertEquals($this->Vehicle->canShiftUp(), $this->Vehicle->can('shift_up'));
 		$this->assertFalse($this->Vehicle->canShiftUp());
 
-		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
 		$this->assertTrue($this->Vehicle->canIgnite());
 		$this->Vehicle->ignite();
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
 
 		$this->assertTrue($this->Vehicle->canShiftUp());
 		$this->assertFalse($this->Vehicle->canShiftDown());
+
+		$this->assertTrue($this->Vehicle->isIdling());
+		$this->assertFalse($this->Vehicle->canCrash());
+		$this->Vehicle->shiftUp();
+		$this->Vehicle->crash();
+		$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
+		$this->assertTrue($this->Vehicle->isStalled());
+		$this->Vehicle->repair();
+		$this->assertTrue($this->Vehicle->isParked());
 	}
 
 	public function testOnMethods() {
@@ -208,16 +190,10 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 		$this->Vehicle->when('parked', array($this, 'whenParked'));
 
-		$this->assertTrue($this->Vehicle->isParked());
 		$this->Vehicle->ignite();
-		$this->assertTrue($this->Vehicle->isIdling());
-		$this->assertFalse($this->Vehicle->canCrash());
 		$this->Vehicle->shiftUp();
 		$this->Vehicle->crash();
-		$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
-		$this->assertTrue($this->Vehicle->isStalled());
 		$this->Vehicle->repair();
-		$this->assertTrue($this->Vehicle->isParked());
 	}
 
 	public function testBubble() {
@@ -243,19 +219,15 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->Vehicle = new Vehicle(3);
 
 		$this->assertEquals("Opel Astra", $this->Vehicle->field('title'));
-		$this->assertEquals("idling", $this->Vehicle->field('state'));
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
 		$this->Vehicle->shiftUp();
-		$this->assertEquals("first_gear", $this->Vehicle->field('state'));
 		$this->assertEquals("first_gear", $this->Vehicle->getCurrentState());
 
 		$this->Vehicle = new Vehicle(4);
 		$this->assertEquals("Nissan Leaf", $this->Vehicle->field('title'));
 		$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
-		$this->assertEquals("stalled", $this->Vehicle->field('state'));
 		$this->assertTrue($this->Vehicle->canRepair());
 		$this->assertTrue($this->Vehicle->repair());
-		$this->assertNotEquals("idling", $this->Vehicle->getCurrentState());
 		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
 	}
 
@@ -276,10 +248,10 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testCallable() {
 		$this->Vehicle->addMethod('whatIsMyName', function(Model $model, $method, $name) {
-			return $model->alias . '-' . $name;
+			return $model->alias . '-' . $method . '-' . $name;
 		});
 
-		$this->assertEquals("Vehicle-Toybota", $this->Vehicle->whatIsMyName("Toybota"));
+		$this->assertEquals("Vehicle-whatIsMyName-Toybota", $this->Vehicle->whatIsMyName("Toybota"));
 	}
 
 	public function testExistingCallable() {

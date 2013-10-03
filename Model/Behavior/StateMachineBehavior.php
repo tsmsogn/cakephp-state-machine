@@ -23,6 +23,17 @@ class StateMachineBehavior extends ModelBehavior {
 		'/on([A-Z][a-zA-Z0-9]+)/' => 'on'
 	);
 
+	protected $_defaultSettings = array(
+		'transition_listeners' => array(
+			'transition' => array(
+				'before' => array(),
+				'after' => array()
+			)
+		),
+		'state_listeners' => array(),
+		'methods' => array()
+	);
+
 /**
  * Sets up all the methods that builds up the state machine.
  * StateMachine->is<State>		    i.e. StateMachine->isParked()
@@ -34,17 +45,8 @@ class StateMachineBehavior extends ModelBehavior {
  * @return void
  */
 	public function setup(Model $model, $config = array()) {
-		if (!isset($this->settings[$model->alias])) {
-			$this->settings[$model->alias] = array(
-				'transition_listeners' => array(
-					'transition' => array(
-						'before' => array(),
-						'after' => array()
-					)
-				),
-				'state_listeners' => array(),
-				'methods' => array()
-			);
+		if (! isset($this->settings[$model->alias])) {
+			$this->settings[$model->alias] = $this->_defaultSettings;
 		}
 
 		foreach ($model->transitions as $transition => $states) {
@@ -99,11 +101,11 @@ class StateMachineBehavior extends ModelBehavior {
  * @return	mixed			The return value of the callback, or an array if the method doesn't exist
  */
 	public function handleMethodCall(Model $model, $method) {
-		if (isset($this->settings[$model->alias]['methods'][$method])) {
-			return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
+		if (! isset($this->settings[$model->alias]['methods'][$method])) {
+			return array('unhandled');
 		}
 
-		return array('unhandled');
+		return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
 	}
 
 /**
@@ -138,11 +140,7 @@ class StateMachineBehavior extends ModelBehavior {
 		$transition = Inflector::underscore($transition);
 		$state = $this->getStates($model, $transition);
 
-		if (! $state) {
-			return false;
-		}
-
-		if ($this->_checkRoleAgainstRule($model, $role, $transition) === false) {
+		if (! $state || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
 		}
 
@@ -200,11 +198,7 @@ class StateMachineBehavior extends ModelBehavior {
 	public function can(Model $model, $transition, $role = null) {
 		$transition = $this->_deFormalizeMethodName($transition);
 
-		if ($this->getStates($model, $transition) == false) {
-			return false;
-		}
-
-		if ($this->_checkRoleAgainstRule($model, $role, $transition) === false) {
+		if (! $this->getStates($model, $transition) || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
 		}
 
@@ -222,7 +216,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Boolean	$bubble			Whether or not to bubble other listeners
  */
 	public function on(Model $model, $transition, $triggerType, Callable $cb, $bubble = true) {
-		$this->settings[$model->alias]['transition_listeners'][strtolower($transition)][$triggerType][] = array(
+		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
 			'cb' => $cb,
 			'bubble' => $bubble
 		);
@@ -237,7 +231,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param	Callable	$cb		The callback function that will be called
  */
 	public function when(Model $model, $state, Callable $cb) {
-		$this->settings[$model->alias]['state_listeners'][strtolower($state)][] = $cb;
+		$this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
 	}
 
 /**
@@ -255,13 +249,17 @@ class StateMachineBehavior extends ModelBehavior {
 
 		// get the states the machine can move from and to
 		$states = $model->transitions[$transition];
+		$currentState = $model->getCurrentState();
 
-		if (! isset($states[$model->getCurrentState()]) && ! isset($states['all'])) {
-			// we canno move from the current state
-			return false;
+		if (isset($states[$currentState])) {
+			return $states[$currentState];
 		}
 
-		return isset($states[$model->getCurrentState()]) ? $states[$model->getCurrentState()] : $states['all'];
+		if (isset($states['all'])) {
+			return $states['all'];
+		}
+
+		return false;
 	}
 
 /**
@@ -322,11 +320,11 @@ EOT;
  * @return	boolean				Whether or not the role may perform the action
  */
 	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
-		if (! isset($model->transitionRules) || ! isset($model->transitionRules[$transition])) {
+		if (! isset($model->transitionRules[$transition])) {
 			return null;
 		}
 
-		if (is_null($role)) {
+		if (! $role) {
 			throw new InvalidArgumentException('The transition ' . $transition . ' requires a role');
 		}
 
