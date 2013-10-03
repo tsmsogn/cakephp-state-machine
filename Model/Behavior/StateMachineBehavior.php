@@ -42,7 +42,8 @@ class StateMachineBehavior extends ModelBehavior {
 						'after' => array()
 					)
 				),
-				'state_listeners' => array()
+				'state_listeners' => array(),
+				'methods' => array()
 			);
 		}
 
@@ -73,6 +74,22 @@ class StateMachineBehavior extends ModelBehavior {
 			$transitionFunction = Inflector::variable($transition);
 			$this->mapMethods['/(' . $transitionFunction . ')/'] = 'transition';
 		}
+	}
+
+	public function addMethod(Model $model, $method, Callable $cb) {
+		$this->settings[$model->alias]['methods'][$method] = $cb;
+		$this->mapMethods['/' . $method . '/'] = 'handleMethodCall';
+
+		// force model to re-load Behavior, so that the mapMethods are working correctly
+		$model->Behaviors->load('Statemachine.StateMachine');
+	}
+
+	public function handleMethodCall(Model $model, $method) {
+		if (isset($this->settings[$model->alias]['methods'][$method])) {
+			return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
+		}
+
+		return array('unhandled');
 	}
 
 /**
@@ -119,9 +136,25 @@ class StateMachineBehavior extends ModelBehavior {
 
 		$this->_callListeners($model, $transition, 'after');
 
+		$stateListeners = array();
+
 		if (isset($this->settings[$model->alias]['state_listeners'][$statesTo])) {
-			foreach ($this->settings[$model->alias]['state_listeners'][$statesTo] as $cb) {
-				$cb();
+			$stateListeners = $this->settings[$model->alias]['state_listeners'][$statesTo];
+		}
+
+		if (method_exists($model, 'onState' . Inflector::camelize($statesTo))) {
+			$stateListeners[] = array($model, 'onState' . Inflector::camelize($statesTo));
+		}
+
+		if (method_exists($model, 'onStateChange')) {
+			$stateListeners[] = array($model, 'onStateChange');
+		}
+
+		foreach ($stateListeners as $cb) {
+			if (is_array($cb) && method_exists($cb[0], $cb[1])) {
+				call_user_func($cb, $statesTo);
+			} elseif ($cb instanceof Closure || is_callable($cb)) {
+				$cb($statesTo);
 			}
 		}
 
@@ -266,8 +299,32 @@ EOT;
 
 		$listeners = array_merge($listeners, $this->settings[$model->alias]['transition_listeners']['transition'][$triggerType]);
 
+		if (method_exists($model, 'on' . Inflector::camelize($triggerType . 'Transition'))) {
+			$listeners[] = array(
+				'cb' => array(
+					$model,
+					'on' . Inflector::camelize($triggerType . 'Transition')
+				),
+				'bubble' => true
+			);
+		}
+
+		if (method_exists($model, 'on' . Inflector::camelize($triggerType . $transition))) {
+			$listeners[] = array(
+				'cb' => array(
+					$model,
+					'on' . Inflector::camelize($triggerType . $transition)
+				),
+				'bubble' => true
+			);
+		}
+
 		foreach ($listeners as $cb) {
-			$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
+			if (is_array($cb['cb']) && method_exists($cb['cb'][0], $cb['cb'][1])) {
+				call_user_func($cb['cb'], $this->getCurrentState($model), $this->getPreviousState($model), $transition);
+			} elseif ($cb['cb'] instanceof Closure) {
+				$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
+			}
 
 			if (! $cb['bubble']) {
 				break;
