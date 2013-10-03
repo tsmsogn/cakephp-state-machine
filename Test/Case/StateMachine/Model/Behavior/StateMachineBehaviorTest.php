@@ -1,7 +1,7 @@
 <?php
 App::uses('StateMachineBehavior', 'StateMachine.Model/Behavior');
 
-class Vehicle extends CakeTestModel {
+class BaseVehicle extends CakeTestModel {
 
 	public $useTable = 'vehicles';
 
@@ -46,6 +46,9 @@ class Vehicle extends CakeTestModel {
 		),
 		'baz' => array()
 	);
+}
+
+class Vehicle extends BaseVehicle {
 
 	public function onStateChange($newState) {
 	}
@@ -64,51 +67,45 @@ class Vehicle extends CakeTestModel {
 
 }
 
-class Toyota extends CakeTestModel {
+class RulesVehicle extends BaseVehicle {
 
-	public $useTable = 'vehicles';
-
-	public $actsAs = array('StateMachine.StateMachine');
-
-	public $stateName = 'Vehicle';
-
-	public $initialState = 'parked';
-
-	public $transitions = array(
+	public $transitionRules = array(
+		'hardwire' => array(
+			'role' => array('thief'),
+		),
 		'ignite' => array(
-			'parked' => 'idling',
-			'stalled' => 'stalled'
+			'role' => array('driver'),
+			'depends' => 'has_key'
 		),
-		'park' => array(
-			'idling' => 'parked',
-			'first_gear' => 'parked'
-		),
-		'shift_up' => array(
-			'idling' => 'first_gear',
-			'first_gear' => 'second_gear',
-			'second_gear' => 'third_gear'
-		),
-		'shift_down' => array(
-			'first_gear' => 'idling',
-			'second_gear' => 'first_gear',
-			'third_gear' => 'second_gear'
-		),
-		'crash' => array(
-			'first_gear' => 'stalled',
-			'second_gear' => 'stalled',
-			'third_gear' => 'stalled'
-		),
-		'repair' => array(
-			'stalled' => 'parked'
-		),
-		'idle' => array(
-			'first_gear' => 'idling'
-		),
-		'turn_off' => array(
-			'all' => 'parked'
-		),
-		'baz' => array()
+		'park'	=> array(
+			'role' => array('driver', 'thief'),
+			'depends' => 'available_parking'
+		)
 	);
+
+	public function __construct($id = false, $table = null, $ds = null) {
+		$this->transitions += array(
+			'hardwire' => array(
+				'parked' => 'idling',
+				'stalled' => 'stalled'
+			)
+		);
+
+		parent::__construct($id, $table, $ds);
+	}
+
+	public function hasKey($role) {
+		if ($role == 'driver') {
+			return true;
+		}
+
+		return false;
+	}
+
+	public function availableParking($role) {
+		return $role == 'thief';
+	}
+
 }
 
 class StateMachineBehaviorTest extends CakeTestCase {
@@ -285,7 +282,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testInvalidOnStateChange() {
-		$this->Vehicle = new Toyota(1);
+		$this->Vehicle = new BaseVehicle(1);
 		$this->Vehicle->ignite();
 	}
 
@@ -298,6 +295,31 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->Vehicle->expects($this->once())->method('onStateIdling');
 
 		$this->assertTrue($this->Vehicle->ignite());
+	}
+
+	public function testRules() {
+		$this->Vehicle = new RulesVehicle(1);
+		$this->assertTrue($this->Vehicle->canIgnite('driver'));
+		$this->assertFalse($this->Vehicle->canIgnite('thief'));
+		$this->assertTrue($this->Vehicle->canHardwire('thief'));
+		$this->assertFalse($this->Vehicle->canHardwire('driver'));
+
+		$this->Vehicle->ignite('driver');
+
+		$this->assertFalse($this->Vehicle->canPark('driver'));
+		$this->assertTrue($this->Vehicle->canPark('thief'));
+	}
+
+	public function testInvalidRules() {
+		$this->setExpectedException('InvalidArgumentException');
+
+		$this->Vehicle = new RulesVehicle(1);
+		$this->Vehicle->ignite();
+	}
+
+	public function testWrongRole() {
+		$this->Vehicle = new RulesVehicle(1);
+		$this->assertFalse($this->Vehicle->ignite('thief'));
 	}
 
 	public function tearDown() {

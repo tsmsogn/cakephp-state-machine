@@ -76,6 +76,18 @@ class StateMachineBehavior extends ModelBehavior {
 		}
 	}
 
+/**
+ * Adds a user defined callback
+ * {{{
+ * $this->Vehicle->addMethod('myMethod', function() {});
+ * $data = $this->Vehicle->myMethod();
+ * }}}
+ *
+ * @param	Model		$model	The model being acted on
+ * @param	string		$method	The method na,e
+ * @param	Callable	$cb		The callback to execute
+ * @return	void
+ */
 	public function addMethod(Model $model, $method, Callable $cb) {
 		$this->settings[$model->alias]['methods'][$method] = $cb;
 		$this->mapMethods['/' . $method . '/'] = 'handleMethodCall';
@@ -84,6 +96,13 @@ class StateMachineBehavior extends ModelBehavior {
 		$model->Behaviors->load('Statemachine.StateMachine');
 	}
 
+/**
+ * Handles user defined method calls, which are implemented using closures.
+ *
+ * @param	Model	$model	The model being acted on
+ * @param	string	$method	The method name
+ * @return	mixed			The return value of the callback, or an array if the method doesn't exist
+ */
 	public function handleMethodCall(Model $model, $method) {
 		if (isset($this->settings[$model->alias]['methods'][$method])) {
 			return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
@@ -117,13 +136,18 @@ class StateMachineBehavior extends ModelBehavior {
  * }}}
  *
  * @param Model $model The model being acted on
+ * @param string $role The rule executing the transition
  * @param string $transition The transition being initiated
  */
-	public function transition(Model $model, $transition) {
+	public function transition(Model $model, $transition, $role = null) {
 		$transition = Inflector::underscore($transition);
 		$statesTo = $this->getStates($model, $transition);
 
 		if (! $statesTo) {
+			return false;
+		}
+
+		if ($this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
 		}
 
@@ -135,30 +159,42 @@ class StateMachineBehavior extends ModelBehavior {
 		$retval = $model->save();
 
 		$this->_callListeners($model, $transition, 'after');
+		$this->_callStateListeners($model, $statesTo);
 
-		$stateListeners = array();
+		return (bool)$retval;
+	}
 
-		if (isset($this->settings[$model->alias]['state_listeners'][$statesTo])) {
-			$stateListeners = $this->settings[$model->alias]['state_listeners'][$statesTo];
+/**
+ * Checks whether or not the given role may perform the transition change.
+ * The callback in 'depends' must be a valid model method.
+ *
+ * @param	Model	$model		The model being acted on
+ * @param	string	$role		The role executing the transition change
+ * @param	string	$transition	The transition
+ * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
+ * @return	boolean				Whether or not the role may perform the action
+ */
+	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
+		if (! isset($model->transitionRules) || ! isset($model->transitionRules[$transition])) {
+			return null;
 		}
 
-		if (method_exists($model, 'onState' . Inflector::camelize($statesTo))) {
-			$stateListeners[] = array($model, 'onState' . Inflector::camelize($statesTo));
+		if (is_null($role)) {
+			throw new InvalidArgumentException('The transition ' . $transition . ' requires a role');
 		}
 
-		if (method_exists($model, 'onStateChange')) {
-			$stateListeners[] = array($model, 'onStateChange');
+		if (! in_array($role, $model->transitionRules[$transition]['role'])) {
+			return false;
 		}
 
-		foreach ($stateListeners as $cb) {
-			if (is_array($cb) && method_exists($cb[0], $cb[1])) {
-				call_user_func($cb, $statesTo);
-			} elseif ($cb instanceof Closure || is_callable($cb)) {
-				$cb($statesTo);
+		if (isset($model->transitionRules[$transition]['depends'])) {
+			$callback = $model->transitionRules[$transition]['depends'];
+			if (! call_user_func(array($model, Inflector::variable($callback)), $role)) {
+				return false;
 			}
 		}
 
-		return (bool)$retval;
+		return true;
 	}
 
 /**
@@ -178,11 +214,23 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $transition The transition being checked
+ * @param string $role The role which should execute the transition
  * @return boolean whether or not the machine can perform the transition
  * @throws BadMethodCallException when method does not exists
  */
-	public function can(Model $model, $transition) {
-		return !!$this->getStates($model, $this->_deFormalizeMethodName($transition));
+	public function can(Model $model, $transition, $role = null) {
+		$transition = $this->_deFormalizeMethodName($transition);
+		$ok = !!$this->getStates($model, $transition);
+
+		if (! $ok) {
+			return false;
+		}
+
+		if ($this->_checkRoleAgainstRule($model, $role, $transition) === false) {
+			return false;
+		}
+
+		return true;
 	}
 
 /**
@@ -286,7 +334,12 @@ EOT;
 	}
 
 /**
- * Calls transition listeners before or after a particular transition
+ * Calls transition listeners before or after a particular transition.
+ * Special model methods are also called, if they exist:
+ * - onBeforeTransition
+ * - onAfterTransition
+ * - onBefore<Transition>	i.e. onBeforePark()
+ * - onAfter<Transition>	i.e. onAfterPark()
  *
  * @param	string	$transition		The transition name
  * @param	string	$triggerType	Either before or after
@@ -328,6 +381,37 @@ EOT;
 
 			if (! $cb['bubble']) {
 				break;
+			}
+		}
+	}
+
+/**
+ * Calls special state listeners when the state have been changed.
+ * If exists, model method such as onStateChange and onState<newState> will be called.
+ *
+ * @param	Model	$model	The model being acted on
+ * @param	string	$state	The new state
+ */
+	protected function _callStateListeners(Model $model, $state) {
+		$stateListeners = array();
+
+		if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
+			$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
+		}
+
+		if (method_exists($model, 'onState' . Inflector::camelize($state))) {
+			$stateListeners[] = array($model, 'onState' . Inflector::camelize($state));
+		}
+
+		if (method_exists($model, 'onStateChange')) {
+			$stateListeners[] = array($model, 'onStateChange');
+		}
+
+		foreach ($stateListeners as $cb) {
+			if (is_array($cb) && method_exists($cb[0], $cb[1])) {
+				call_user_func($cb, $state);
+			} elseif ($cb instanceof Closure || is_callable($cb)) {
+				$cb($state);
 			}
 		}
 	}
