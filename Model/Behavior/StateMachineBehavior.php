@@ -47,15 +47,6 @@ class StateMachineBehavior extends ModelBehavior {
 			);
 		}
 
-		$this->_initializeMethods($model);
-	}
-
-/**
- * Initializes the methods that the model can call
- * @param	Model	$model	The model being acted on
- * @return	void
- */
-	protected function _initializeMethods(Model $model) {
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
 				foreach (array(
@@ -98,17 +89,6 @@ class StateMachineBehavior extends ModelBehavior {
 
 		// force model to re-load Behavior, so that the mapMethods are working correctly
 		$model->Behaviors->load('Statemachine.StateMachine');
-	}
-
-/**
- * Checks whether or not a user-defined method exists in the Behavior
- *
- * @param	Model	$model	The model being acted on
- * @param	string	$method	The method's name
- * @return	boolean			True if the method exists, false otherwise
- */
-	protected function _hasMethod(Model $model, $method) {
-		return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
 	}
 
 /**
@@ -156,9 +136,9 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function transition(Model $model, $transition, $role = null) {
 		$transition = Inflector::underscore($transition);
-		$statesTo = $this->getStates($model, $transition);
+		$state = $this->getStates($model, $transition);
 
-		if (! $statesTo) {
+		if (! $state) {
 			return false;
 		}
 
@@ -170,53 +150,30 @@ class StateMachineBehavior extends ModelBehavior {
 
 		$model->read(null, $model->id);
 		$model->set('previous_state', $model->getCurrentState());
-		$model->set('state', $statesTo);
+		$model->set('state', $state);
 		$retval = $model->save();
 
 		$this->_callTransitionListeners($model, $transition, 'after');
-		$this->_callStateListeners($model, $statesTo);
+
+		$stateListeners = array();
+		if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
+			$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
+		}
+
+		foreach (array(
+			'onState' . Inflector::camelize($state),
+			'onStateChange'
+		) as $method) {
+			if (method_exists($model, $method)) {
+				$stateListeners[] = array($model, $method);
+			}
+		}
+
+		foreach ($stateListeners as $cb) {
+			$cb($state);
+		}
 
 		return (bool)$retval;
-	}
-
-/**
- * Checks whether or not the given role may perform the transition change.
- * The callback in 'depends' must be a valid model method.
- *
- * @param	Model	$model		The model being acted on
- * @param	string	$role		The role executing the transition change
- * @param	string	$transition	The transition
- * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
- * @return	boolean				Whether or not the role may perform the action
- */
-	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
-		if (! isset($model->transitionRules) || ! isset($model->transitionRules[$transition])) {
-			return null;
-		}
-
-		if (is_null($role)) {
-			throw new InvalidArgumentException('The transition ' . $transition . ' requires a role');
-		}
-
-		if (! in_array($role, $model->transitionRules[$transition]['role'])) {
-			return false;
-		}
-
-		if (! isset($model->transitionRules[$transition]['depends'])) {
-			return true;
-		}
-
-		$callback = Inflector::variable($model->transitionRules[$transition]['depends']);
-
-		if ($this->_hasMethod($model, $callback)) {
-			// Fix: if the method is supplied as an anonymous callback, we cannot call
-			// it from the model directly
-			$res = $this->settings[$model->alias]['methods'][$callback]($role);
-		} else {
-			$res = call_user_func(array($model, $callback), $role);
-		}
-
-		return $res;
 	}
 
 /**
@@ -242,9 +199,8 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function can(Model $model, $transition, $role = null) {
 		$transition = $this->_deFormalizeMethodName($transition);
-		$ok = !!$this->getStates($model, $transition);
 
-		if (! $ok) {
+		if ($this->getStates($model, $transition) == false) {
 			return false;
 		}
 
@@ -356,6 +312,46 @@ EOT;
 	}
 
 /**
+ * Checks whether or not the given role may perform the transition change.
+ * The callback in 'depends' must be a valid model method.
+ *
+ * @param	Model	$model		The model being acted on
+ * @param	string	$role		The role executing the transition change
+ * @param	string	$transition	The transition
+ * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
+ * @return	boolean				Whether or not the role may perform the action
+ */
+	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
+		if (! isset($model->transitionRules) || ! isset($model->transitionRules[$transition])) {
+			return null;
+		}
+
+		if (is_null($role)) {
+			throw new InvalidArgumentException('The transition ' . $transition . ' requires a role');
+		}
+
+		if (! in_array($role, $model->transitionRules[$transition]['role'])) {
+			return false;
+		}
+
+		if (! isset($model->transitionRules[$transition]['depends'])) {
+			return true;
+		}
+
+		$callback = Inflector::variable($model->transitionRules[$transition]['depends']);
+
+		if ($this->_hasMethod($model, $callback)) {
+			// Fix: if the method is supplied as an anonymous callback, we cannot call
+			// it from the model directly
+			$res = $this->settings[$model->alias]['methods'][$callback]($role);
+		} else {
+			$res = call_user_func(array($model, $callback), $role);
+		}
+
+		return $res;
+	}
+
+/**
  * Calls transition listeners before or after a particular transition.
  * Special model methods are also called, if they exist:
  * - onBeforeTransition
@@ -367,12 +363,12 @@ EOT;
  * @param	string	$triggerType	Either before or after
  */
 	protected function _callTransitionListeners(Model $model, $transition, $triggerType = 'after') {
-		$listeners = array();
-		if (isset($this->settings[$model->alias]['transition_listeners'][$transition][$triggerType])) {
-			$listeners = $this->settings[$model->alias]['transition_listeners'][$transition][$triggerType];
-		}
+		$transitionListeners = &$this->settings[$model->alias]['transition_listeners'];
+		$listeners = $transitionListeners['transition'][$triggerType];
 
-		$listeners = array_merge($listeners, $this->settings[$model->alias]['transition_listeners']['transition'][$triggerType]);
+		if (isset($transitionListeners[$transition][$triggerType])) {
+			$listeners = array_merge($transitionListeners[$transition][$triggerType], $listeners);
+		}
 
 		foreach (array(
 			'on' . Inflector::camelize($triggerType . 'Transition'),
@@ -386,40 +382,15 @@ EOT;
 			}
 		}
 
+		$currentState = $this->getCurrentState($model);
+		$previousState = $this->getPreviousState($model);
+
 		foreach ($listeners as $cb) {
-			$cb['cb']($this->getCurrentState($model), $this->getPreviousState($model), $transition);
+			$cb['cb']($currentState, $previousState, $transition);
 
 			if (! $cb['bubble']) {
 				break;
 			}
-		}
-	}
-
-/**
- * Calls special state listeners when the state have been changed.
- * If exists, model method such as onStateChange and onState<newState> will be called.
- *
- * @param	Model	$model	The model being acted on
- * @param	string	$state	The new state
- */
-	protected function _callStateListeners(Model $model, $state) {
-		$stateListeners = array();
-
-		if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
-			$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
-		}
-
-		foreach (array(
-			'onState' . Inflector::camelize($state),
-			'onStateChange'
-		) as $method) {
-			if (method_exists($model, $method)) {
-				$stateListeners[] = array($model, $method);
-			}
-		}
-
-		foreach ($stateListeners as $cb) {
-			$cb($state);
 		}
 	}
 
@@ -431,7 +402,17 @@ EOT;
  * @return	string			The deformalized method name
  */
 	protected function _deFormalizeMethodName($name) {
-		$name = preg_replace('#^(can|is)#', '', $name);
-		return Inflector::underscore($name);
+		return Inflector::underscore(preg_replace('#^(can|is)#', '', $name));
+	}
+
+/**
+ * Checks whether or not a user-defined method exists in the Behavior
+ *
+ * @param	Model	$model	The model being acted on
+ * @param	string	$method	The method's name
+ * @return	boolean			True if the method exists, false otherwise
+ */
+	protected function _hasMethod(Model $model, $method) {
+		return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
 	}
 }
