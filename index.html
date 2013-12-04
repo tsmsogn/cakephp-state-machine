@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>CakePHP State Machine Behavior by davidsteinsland</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">CakePHP State Machine Behavior</h1>
+        <p class="header">StateMachineBehavior for CakePHP.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/davidsteinsland/cakephp-state-machine/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/davidsteinsland/cakephp-state-machine/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/davidsteinsland/cakephp-state-machine">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/davidsteinsland">davidsteinsland</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a name="cakephp-state-machine" class="anchor" href="#cakephp-state-machine"><span class="octicon octicon-link"></span></a>CakePHP State Machine</h1>
+
+<p><a href="https://travis-ci.org/davidsteinsland/cakephp-state-machine"><img src="https://travis-ci.org/davidsteinsland/cakephp-state-machine.png?branch=master" alt="Build Status"></a> <a href="https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master"><img src="https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master" alt="Coverage Status"></a> <a href="https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/"><img src="https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/badges/quality-score.png?s=7d6d7a43f47401c3a4fda69d799c9d671a8659e3" alt="Scrutinizer Quality Score"></a> <a href="https://packagist.org/packages/davidsteinsland/cakephp-state-machine"><img src="https://poser.pugx.org/davidsteinsland/cakephp-state-machine/v/stable.png" alt="Latest Stable Version"></a> <a href="https://packagist.org/packages/davidsteinsland/cakephp-state-machine"><img src="https://poser.pugx.org/davidsteinsland/cakephp-state-machine/downloads.png" alt="Total Downloads"></a></p>
+
+<p>Documentation is not finished yet either. See the tests if you want to learn something.</p>
+
+<h2>
+<a name="what-is-a-state-machine" class="anchor" href="#what-is-a-state-machine"><span class="octicon octicon-link"></span></a>What is a State Machine?</h2>
+
+<p><a href="http://en.wikipedia.org/wiki/State_machine">http://en.wikipedia.org/wiki/State_machine</a></p>
+
+<h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>First you need to alter the tables of the models you want to use StateMachine:</p>
+
+<div class="highlight highlight-sql"><pre><span class="k">ALTER</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">vehicle</span><span class="o">`</span> <span class="k">ADD</span> <span class="o">`</span><span class="k">state</span><span class="o">`</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">);</span>
+<span class="k">ALTER</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">vehicle</span><span class="o">`</span> <span class="k">ADD</span> <span class="o">`</span><span class="n">previous_state</span><span class="o">`</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">);</span>
+</pre></div>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Callbacks on states and transitions</li>
+<li>Custom methods may be added to your model</li>
+<li>
+<code>is($state)</code>, <code>can($transition)</code>, <code>on($transition, 'before|after', callback)</code> and <code>when($state, callback)</code> methods allows you to control the whole flow. <code>transition($transition)</code> is used to move between two states.</li>
+<li>Roles and rules</li>
+<li>Graphviz</li>
+</ul><h2>
+<a name="naming-conventions" class="anchor" href="#naming-conventions"><span class="octicon octicon-link"></span></a>Naming conventions</h2>
+
+<ul>
+<li>
+<p>Transitions and states in <code>$transitions</code> should be <strong>lowercased</strong> and <strong>underscored</strong>. The method names are in turn camelized.</p>
+
+<p>Example:
+<code>shift_up</code> =&gt; <code>canShiftUp()</code> =&gt; <code>shiftUp()</code>
+<code>first_gear</code> =&gt; <code>isFirstGear()</code></p>
+</li>
+</ul><h2>
+<a name="how-to-use" class="anchor" href="#how-to-use"><span class="octicon octicon-link"></span></a>How to Use</h2>
+
+<div class="highlight highlight-php"><pre><span class="nx">App</span><span class="o">::</span><span class="na">uses</span><span class="p">(</span><span class="s1">'StateMachineBehavior'</span><span class="p">,</span> <span class="s1">'StateMachine.Model/Behavior'</span><span class="p">);</span>
+
+<span class="k">class</span> <span class="nc">VehicleModel</span> <span class="k">extends</span> <span class="nx">AppModel</span> <span class="p">{</span>
+
+    <span class="k">public</span> <span class="nv">$useTable</span> <span class="o">=</span> <span class="s1">'Vehicle'</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nv">$actsAs</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'StateMachine.StateMachine'</span><span class="p">);</span>
+
+    <span class="k">public</span> <span class="nv">$initialState</span> <span class="o">=</span> <span class="s1">'parked'</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nv">$transitionRules</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'ignite'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'role'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'driver'</span><span class="p">),</span>
+            <span class="s1">'depends'</span> <span class="o">=&gt;</span> <span class="s1">'has_key'</span>
+        <span class="p">)</span>
+    <span class="p">);</span>
+
+    <span class="k">public</span> <span class="nv">$transitions</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'ignite'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'parked'</span> <span class="o">=&gt;</span> <span class="s1">'idling'</span><span class="p">,</span>
+            <span class="s1">'stalled'</span> <span class="o">=&gt;</span> <span class="s1">'stalled'</span>
+        <span class="p">),</span>
+        <span class="s1">'park'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'idling'</span> <span class="o">=&gt;</span> <span class="s1">'parked'</span><span class="p">,</span>
+            <span class="s1">'first_gear'</span> <span class="o">=&gt;</span> <span class="s1">'parked'</span>
+        <span class="p">),</span>
+        <span class="s1">'shift_up'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'idling'</span> <span class="o">=&gt;</span> <span class="s1">'first_gear'</span><span class="p">,</span>
+            <span class="s1">'first_gear'</span> <span class="o">=&gt;</span> <span class="s1">'second_gear'</span><span class="p">,</span>
+            <span class="s1">'second_gear'</span> <span class="o">=&gt;</span> <span class="s1">'third_gear'</span>
+        <span class="p">),</span>
+        <span class="s1">'shift_down'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'first_gear'</span> <span class="o">=&gt;</span> <span class="s1">'idling'</span><span class="p">,</span>
+            <span class="s1">'second_gear'</span> <span class="o">=&gt;</span> <span class="s1">'first_gear'</span><span class="p">,</span>
+            <span class="s1">'third_gear'</span> <span class="o">=&gt;</span> <span class="s1">'second_gear'</span>
+        <span class="p">),</span>
+        <span class="s1">'crash'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'first_gear'</span> <span class="o">=&gt;</span> <span class="s1">'stalled'</span><span class="p">,</span>
+            <span class="s1">'second_gear'</span> <span class="o">=&gt;</span> <span class="s1">'stalled'</span><span class="p">,</span>
+            <span class="s1">'third_gear'</span> <span class="o">=&gt;</span> <span class="s1">'stalled'</span>
+        <span class="p">),</span>
+        <span class="s1">'repair'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'stalled'</span> <span class="o">=&gt;</span> <span class="s1">'parked'</span>
+        <span class="p">),</span>
+        <span class="s1">'idle'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'first_gear'</span> <span class="o">=&gt;</span> <span class="s1">'idling'</span>
+        <span class="p">),</span>
+        <span class="s1">'turn_off'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">'all'</span> <span class="o">=&gt;</span> <span class="s1">'parked'</span>
+        <span class="p">)</span>
+    <span class="p">);</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$id</span> <span class="o">=</span> <span class="k">false</span><span class="p">,</span> <span class="nv">$ds</span> <span class="o">=</span> <span class="k">false</span><span class="p">,</span> <span class="nv">$table</span> <span class="o">=</span> <span class="k">false</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span><span class="nv">$id</span><span class="p">,</span> <span class="nv">$ds</span><span class="p">,</span> <span class="nv">$table</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">on</span><span class="p">(</span><span class="s1">'ignite'</span><span class="p">,</span> <span class="s1">'after'</span><span class="p">,</span> <span class="k">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="c1">// the car just ignited!</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">isMoving</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nb">in_array</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">getCurrentState</span><span class="p">(),</span> <span class="k">array</span><span class="p">(</span><span class="s1">'first_gear'</span><span class="p">,</span> <span class="s1">'second_gear'</span><span class="p">,</span> <span class="s1">'third_gear'</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">hasKey</span><span class="p">(</span><span class="nv">$role</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$role</span> <span class="o">==</span> <span class="s1">'driver'</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+</pre></div>
+
+<div class="highlight highlight-php"><pre><span class="k">class</span> <span class="nc">Controller</span> <span class="o">....</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">method</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Vehicle</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Vehicle</span><span class="o">-&gt;</span><span class="na">save</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+            <span class="s1">'Vehicle'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+                <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'Toybota'</span>
+            <span class="p">)</span>
+        <span class="p">));</span>
+        <span class="c1">// $this-&gt;Vehicle-&gt;getCurrentState() == 'parked'</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Vehicle</span><span class="o">-&gt;</span><span class="na">canIgnite</span><span class="p">(</span><span class="s1">'driver'</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Vehicle</span><span class="o">-&gt;</span><span class="na">ignite</span><span class="p">(</span><span class="s1">'driver'</span><span class="p">);</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">Vehicle</span><span class="o">-&gt;</span><span class="na">shiftUp</span><span class="p">();</span>
+            <span class="c1">// $this-&gt;Vehicle-&gt;getCurrentState() == 'first_gear'</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+<h2>
+<a name="graphviz" class="anchor" href="#graphviz"><span class="octicon octicon-link"></span></a>Graphviz</h2>
+
+<p>Here's how to state machine of the Vehicle would look like if you saved:</p>
+
+<div class="highlight highlight-php"><pre><span class="nv">$model</span><span class="o">-&gt;</span><span class="na">toDot</span><span class="p">()</span>
+</pre></div>
+
+<p>into <code>fsm.gv</code> and ran:</p>
+
+<div class="highlight highlight-sh"><pre>dot -Tpng -ofsm.png fsm.gv
+</pre></div>
+
+<p><img src="fsm.png" alt=""></p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
