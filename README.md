@@ -119,7 +119,7 @@ class Controller .... {
 }
 ```
 
-## Graphivz
+## Graphviz
 Here's how to state machine of the Vehicle would look like if you saved:
 ```php
 $model->toDot()
