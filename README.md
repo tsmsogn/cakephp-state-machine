@@ -2,7 +2,7 @@ CakePHP State Machine
 =====================
 [![Build Status](https://travis-ci.org/davidsteinsland/cakephp-state-machine.png?branch=master)](https://travis-ci.org/davidsteinsland/cakephp-state-machine) [![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master) [![Scrutinizer Quality Score](https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/badges/quality-score.png?s=7d6d7a43f47401c3a4fda69d799c9d671a8659e3)](https://scrutinizer-ci.com/g/davidsteinsland/cakephp-state-machine/) [![Latest Stable Version](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/v/stable.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine) [![Total Downloads](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/downloads.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine)
 
-Documentation is not finished yet either. See the tests if you want to learn something.
+Documentation is not finished yet either. See the tests if you want to learn something, as all aspects of the state machine is tested there.
 
 ## What is a State Machine?
 http://en.wikipedia.org/wiki/State_machine
@@ -21,12 +21,41 @@ ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50);
 - Roles and rules
 - Graphviz
 
+### Callbacks
+You can add callbacks that will fire before/after a transition, and before/after a state change. This can either be done manually with `$this->on('mytransition', 'before', funtion() {})`, or you can add a method to your model:
+
+```php
+public function onBeforeTransition($currentState, $previousState, $transition) {
+    // will fire on all transitions
+}
+
+public function onAfterIgnite($currentState, $previousState, $transition) {
+    // will fire after the ignite transition
+}
+```
+
+The state callbacks are a little different:
+
+```php
+public function onStateChange($newState) {
+    // will fire on all state changes
+}
+
+public function onStateIdling($newState) {
+    // will fire on the idling state
+}
+```
+
+
 ## Naming conventions
 - Transitions and states in `$transitions` should be **lowercased** and **underscored**. The method names are in turn camelized.
   
   Example:
-  `shift_up` => `canShiftUp()` => `shiftUp()`
-  `first_gear` => `isFirstGear()`
+
+```
+    shift_up   => canShiftUp() => shiftUp()
+    first_gear => isFirstGear()
+```
 
 ## How to Use
 ```php
@@ -84,20 +113,35 @@ class VehicleModel extends AppModel {
 
     public function __construct($id = false, $ds = false, $table = false) {
         parent::__construct($id, $ds, $table);
-        $this->on('ignite', 'after', function() {
+        $this->on('ignite', 'after', function($prevState, $nextState, $transition) {
             // the car just ignited!
         });
     }
 
+    // a shortcut method for checking if the vehicle is moving
     public function isMoving() {
         return in_array($this->getCurrentState(), array('first_gear', 'second_gear', 'third_gear'));
     }
 
+    // the dependant function for "ignite"
 	public function hasKey($role) {
 		return $role == 'driver';
 	}
 
 }
+```
+
+With the model above, we have the following methods:
+
+```
+isParked()    onStateParked()
+isStalled()   onStateStalled()
+ignite()      canIgnite()         onBeforeIgnite()    onAfterIgnite()
+park()        canPark()           onBeforePark()      onAfterPark()
+isFirstGear() onStateFirstGear()
+shiftUp()     canShiftUp()        onBeforeShiftUp()   onAfterShiftUp()
+
+....
 ```
 
 ```php
