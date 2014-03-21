@@ -128,7 +128,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testAvailableStates() {
-		$this->assertCount(15, $this->Vehicle->getAvailableStates());
+		$this->assertCount(6, $this->Vehicle->getAvailableStates());
 	}
 
 	public function testFindAllByState() {

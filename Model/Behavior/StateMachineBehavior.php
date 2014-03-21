@@ -40,6 +40,11 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	protected $_availableStates = array();
 
+	protected function _addAvailableState($state) {
+		if ($state != 'All' && !in_array($state, $this->_availableStates)) {
+			$this->_availableStates[] = Inflector::camelize($state);
+		}
+	}
 /**
  * Sets up all the methods that builds up the state machine.
  * StateMachine->is<State>		    i.e. StateMachine->isParked()
@@ -57,9 +62,8 @@ class StateMachineBehavior extends ModelBehavior {
 
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
-				if (Inflector::camelize($stateFrom) != 'All') {
-					$this->_availableStates[] = Inflector::camelize($stateFrom);
-				}
+				$this->_addAvailableState(Inflector::camelize($stateFrom));
+				$this->_addAvailableState(Inflector::camelize($stateTo));
 				foreach (array(
 					'is' . Inflector::camelize($stateFrom),
 					'is' . Inflector::camelize($stateTo)
