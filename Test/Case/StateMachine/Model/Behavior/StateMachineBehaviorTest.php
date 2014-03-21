@@ -127,7 +127,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->StateMachine = $this->Vehicle->Behaviors->StateMachine;
 	}
 
-	public function testFindByState() {
+	public function testFindAllByState() {
 		$this->assertFalse($this->Vehicle->findAllByState());
 		$this->assertFalse($this->Vehicle->findAllByState('illegal_state_should_not_be_possible'));
 		$this->assertFalse($this->Vehicle->findAllByState(array('illegal_state_should_not_be_possible', 'parked')));
@@ -136,6 +136,28 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertCount(4, $this->Vehicle->findAllByState('all'));
 		$this->assertCount(1, $this->Vehicle->findAllByState('idling'));
 		$this->assertCount(3, $this->Vehicle->findAllByState(array('idling', 'parked')));
+	}
+
+	public function testFindCountByState() {
+		$this->assertFalse($this->Vehicle->findCountByState());
+		$this->assertFalse($this->Vehicle->findCountByState('illegal_state_should_not_be_possible'));
+		$this->assertFalse($this->Vehicle->findCountByState(array('illegal_state_should_not_be_possible', 'parked')));
+		$this->assertEqual(2, $this->Vehicle->findCountByState('parked'));
+		$this->assertEqual(1, $this->Vehicle->findCountByState('parked', array('conditions' => array('Vehicle.title' => 'Audi Q4'))));
+		$this->assertEqual(4, $this->Vehicle->findCountByState('all'));
+		$this->assertEqual(1, $this->Vehicle->findCountByState('idling'));
+		$this->assertEqual(3, $this->Vehicle->findCountByState(array('idling', 'parked')));
+	}
+
+	public function testFindFirstByState() {
+		$this->assertFalse($this->Vehicle->findFirstByState());
+		$this->assertFalse($this->Vehicle->findFirstByState('illegal_state_should_not_be_possible'));
+		$this->assertFalse($this->Vehicle->findFirstByState(array('illegal_state_should_not_be_possible', 'parked')));
+		$this->assertCount(1, $this->Vehicle->findFirstByState('parked'));
+		$this->assertCount(1, $this->Vehicle->findFirstByState('parked', array('conditions' => array('Vehicle.title' => 'Audi Q4'))));
+		$this->assertCount(1, $this->Vehicle->findFirstByState('all'));
+		$this->assertCount(1, $this->Vehicle->findFirstByState('idling'));
+		$this->assertCount(1, $this->Vehicle->findFirstByState(array('idling', 'parked')));
 	}
 
 	public function testInitialState() {
