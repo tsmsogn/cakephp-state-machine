@@ -35,6 +35,12 @@ class StateMachineBehavior extends ModelBehavior {
 	);
 
 /**
+ * Array of all configured states. Initialized by self::setup()
+ * @var array
+ */
+	protected $_availableStates = array();
+
+/**
  * Sets up all the methods that builds up the state machine.
  * StateMachine->is<State>		    i.e. StateMachine->isParked()
  * StateMachine->can<Transition>	i.e. StateMachine->canShiftGear()
@@ -51,6 +57,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
+				$this->_availableStates[] = Inflector::camelize($stateFrom);
 				foreach (array(
 					'is' . Inflector::camelize($stateFrom),
 					'is' . Inflector::camelize($stateTo)
@@ -122,6 +129,27 @@ class StateMachineBehavior extends ModelBehavior {
 		}
 
 		return true;
+	}
+
+/**
+ * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * @param  Model  $model    The model being acted on
+ * @param  [type] $state    The state to find. this will be checked for validity.
+ * @param  array  $params   Regular $params array for CakeModel->find
+ * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
+ * @author Frode Marton Meling
+ */
+	public function findByState(Model $model, $state = null, $params = array()) {
+		if ($state === null || ! in_array(Inflector::camelize($state), $this->_availableStates)) {
+			return false;
+		}
+
+		if (Inflector::camelize($state) == 'All') {
+			return $model->find('all', $params);
+		} else {
+			$params['conditions']["{$model->alias}.state"] = $state;
+			return $model->find('all', $params);
+		}
 	}
 
 /**
