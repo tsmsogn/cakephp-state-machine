@@ -132,6 +132,25 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * checks if $state or Array of states are valid ones
+ * @param  string/array $state a string representation of state or a array of states
+ * @return boolean
+ * @author Frode Marton Meling
+ */
+	protected function _validState($state) {
+		if (!is_array($state)) {
+			return in_array(Inflector::camelize($state), $this->_availableStates);
+		}
+
+		foreach ($state as $singleState) {
+			if (!in_array(Inflector::camelize($singleState), $this->_availableStates)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+/**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
  * @param  Model  $model    The model being acted on
  * @param  [type] $state    The state to find. this will be checked for validity.
@@ -140,11 +159,11 @@ class StateMachineBehavior extends ModelBehavior {
  * @author Frode Marton Meling
  */
 	public function findByState(Model $model, $state = null, $params = array()) {
-		if ($state === null || ! in_array(Inflector::camelize($state), $this->_availableStates)) {
+		if ($state === null || ! $this->_validState($state)) {
 			return false;
 		}
 
-		if (Inflector::camelize($state) != 'All') {
+		if (is_array($state) || Inflector::camelize($state) != 'All') {
 			$params['conditions']["{$model->alias}.state"] = $state;
 		}
 		return $model->find('all', $params);
