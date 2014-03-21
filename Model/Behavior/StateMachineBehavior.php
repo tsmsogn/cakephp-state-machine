@@ -152,13 +152,14 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
- * @param  Model  $model    The model being acted on
- * @param  [type] $state    The state to find. this will be checked for validity.
- * @param  array  $params   Regular $params array for CakeModel->find
+ * @param  Model        $model    The model being acted on
+ * @param  string       $type     find type (ref. CakeModel)
+ * @param  array/string $state    The state to find. this will be checked for validity.
+ * @param  array        $params   Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
-	public function findByState(Model $model, $state = null, $params = array()) {
+	protected function _findByState(Model $model, $type, $state = null, $params = array()) {
 		if ($state === null || ! $this->_validState($state)) {
 			return false;
 		}
@@ -166,7 +167,19 @@ class StateMachineBehavior extends ModelBehavior {
 		if (is_array($state) || Inflector::camelize($state) != 'All') {
 			$params['conditions']["{$model->alias}.state"] = $state;
 		}
-		return $model->find('all', $params);
+		return $model->find($type, $params);
+	}
+
+/**
+ * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * @param  Model  $model    The model being acted on
+ * @param  array/string $state    The state to find. this will be checked for validity.
+ * @param  array  $params   Regular $params array for CakeModel->find
+ * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
+ * @author Frode Marton Meling
+ */
+	public function findAllByState(Model $model, $state = null, $params = array()) {
+		return $this->_findByState($model, 'all', $state, $params);
 	}
 
 /**
