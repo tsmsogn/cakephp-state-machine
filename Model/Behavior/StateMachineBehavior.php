@@ -38,7 +38,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Array of all configured states. Initialized by self::setup()
  * @var array
  */
-	protected $_availableStates = array();
+	public $availableStates = array();
 
 /**
  * Sets up all the methods that builds up the state machine.
@@ -57,7 +57,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
-				$this->_availableStates[] = Inflector::camelize($stateFrom);
+				$this->availableStates[] = Inflector::camelize($stateFrom);
 				foreach (array(
 					'is' . Inflector::camelize($stateFrom),
 					'is' . Inflector::camelize($stateTo)
@@ -139,11 +139,11 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	protected function _validState($state) {
 		if (!is_array($state)) {
-			return in_array(Inflector::camelize($state), $this->_availableStates);
+			return in_array(Inflector::camelize($state), $this->availableStates);
 		}
 
 		foreach ($state as $singleState) {
-			if (!in_array(Inflector::camelize($singleState), $this->_availableStates)) {
+			if (!in_array(Inflector::camelize($singleState), $this->availableStates)) {
 				return false;
 			}
 		}
