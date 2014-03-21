@@ -38,7 +38,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Array of all configured states. Initialized by self::setup()
  * @var array
  */
-	public $availableStates = array();
+	protected $_availableStates = array();
 
 /**
  * Sets up all the methods that builds up the state machine.
@@ -57,7 +57,9 @@ class StateMachineBehavior extends ModelBehavior {
 
 		foreach ($model->transitions as $transition => $states) {
 			foreach ($states as $stateFrom => $stateTo) {
-				$this->availableStates[] = Inflector::camelize($stateFrom);
+				if (Inflector::camelize($stateFrom) != 'All') {
+					$this->_availableStates[] = Inflector::camelize($stateFrom);
+				}
 				foreach (array(
 					'is' . Inflector::camelize($stateFrom),
 					'is' . Inflector::camelize($stateTo)
@@ -132,18 +134,27 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * Returns an array of all configured states
+ * @return array
+ */
+	public function getAvailableStates() {
+		return $this->_availableStates;
+	}
+
+/**
  * checks if $state or Array of states are valid ones
  * @param  string/array $state a string representation of state or a array of states
  * @return boolean
  * @author Frode Marton Meling
  */
 	protected function _validState($state) {
+		$availableStatesIncludingAll = array_merge(array('All'), $this->_availableStates);
 		if (!is_array($state)) {
-			return in_array(Inflector::camelize($state), $this->availableStates);
+			return in_array(Inflector::camelize($state), $availableStatesIncludingAll);
 		}
 
 		foreach ($state as $singleState) {
-			if (!in_array(Inflector::camelize($singleState), $this->availableStates)) {
+			if (!in_array(Inflector::camelize($singleState), $availableStatesIncludingAll)) {
 				return false;
 			}
 		}
