@@ -144,12 +144,10 @@ class StateMachineBehavior extends ModelBehavior {
 			return false;
 		}
 
-		if (Inflector::camelize($state) == 'All') {
-			return $model->find('all', $params);
-		} else {
+		if (Inflector::camelize($state) != 'All') {
 			$params['conditions']["{$model->alias}.state"] = $state;
-			return $model->find('all', $params);
 		}
+		return $model->find('all', $params);
 	}
 
 /**
