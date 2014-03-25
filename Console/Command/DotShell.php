@@ -28,6 +28,7 @@ App::uses('String', 'Utility');
 class DotShell extends Shell {
 
 	public $Model;
+
 	public function main() {
 		$this->out('Hello world.');
 	}
@@ -39,7 +40,7 @@ class DotShell extends Shell {
  * @param  string   $destFile    Name with full path to where file is to be created
  * @return return                returns whatever shell_exec returns
  */
-	protected function generatePng($dot, $destFile) {
+	protected function _generatePng($dot, $destFile) {
 		if (!isset($dot)) {
 			return false;
 		}
@@ -62,14 +63,14 @@ class DotShell extends Shell {
 					'color' => 'lightgrey',
 					'activeColor' => 'green'
 					));
-				$this->generatePng($dot, TMP . $this->args[2]);
+				$this->_generatePng($dot, TMP . $this->args[2]);
 
-				foreach ($this->Model->roles as $role) {
+				foreach ($this->Model->roles as $role => $options) {
 					$dot = $this->Model->toDotWithRoles(array($role => array()), array(
 						'color' => 'lightgrey',
 						'activeColor' => 'green'
 						));
-					$this->generatePng($dot, TMP . $role . '_' . $this->args[2]);
+					$this->_generatePng($dot, TMP . $role . '_' . $this->args[2]);
 				}
 				//$this->Model = $this->args[0];
 				//$this
