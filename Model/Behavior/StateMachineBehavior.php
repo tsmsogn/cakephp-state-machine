@@ -451,6 +451,65 @@ EOT;
 	}
 
 /**
+ * Method to return contents for a GV file based on array of roles. That means you can send
+ * an array of roles (with options) and this method will calculate the presentation that
+ * can be made into graphics by:
+ * {{{
+ * dot -Tpng -ofsm.png fsm.gv
+ * }}}
+ * Assuming that the contents are written to the file fsm.gv
+ *
+ * @param	Model	$model		 The model being acted on
+ * @param	array	$role		 The role(s) executing the transition change. with an options array.
+ *                               'role' => array('color' => color of the arrows)
+ *                               In the future many more Graphviz options can be added
+ * @param  array    $nodeOptions Options for nodes
+ * 								 'color' => 'color of all nodes'
+ * 								 'activeColor' => 'the color you want the active node to have'
+ * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
+ * @return	string			The contents of the graphviz file
+ */
+	public function toDotWithRoles(Model $model, $roles, $nodeColor) {
+	    $rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+
+		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n}\n";
+		$graph = "";
+		$tmpDigraph = "";
+		$rolesDone = array();
+		foreach ($model->transitions as $transition => $states) {
+			$commonTransitions = array();
+			foreach ($roles as $role => $options) {
+				foreach ($states as $stateFrom => $stateTo) {
+					if (array_key_exists($transition, $model->transitionRules)) {
+						if (in_array($role, $model->transitionRules[$transition]['role'])) {
+							if (isset($options['color'])) {
+								$color = $options['color'];
+							} else {
+								$color = '#' . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)];
+							}
+
+							if (isset($model->transitionRules[$transition]['depends'])) {
+								$tmpDigraph .= sprintf("\t%s -> %s [ arrowType = normal, label = \" %s by %s if %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), Inflector::camelize($model->transitionRules[$transition]['depends']), $color);
+							} else {
+								$tmpDigraph .= sprintf("\t%s -> %s [ arrowType = normal, label = \" %s by %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), $color);
+							}
+						}
+					} elseif (!in_array($transition, $commonTransitions)) {
+						$tmpDigraph .= sprintf("\t%s -> %s [ label = \" %s \"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition));
+						$commonTransitions[] = $transition;
+					}
+				}
+				if (!in_array($role, $rolesDone)) {
+					$rolesDone[] = $role;
+				}
+			}
+		}
+		$tmpDigraph .= "\t" . Inflector::camelize($this->getCurrentState($model)) . " [ color = " . $nodeColor['activeColor'] . " ]";
+		$graph .= sprintf($digraph, $nodeColor['color'], 'Statemachine for role(s) : ' . join(', ', $rolesDone), $tmpDigraph);
+		return $graph;
+	}
+
+/**
  * Checks whether or not the given role may perform the transition change.
  * The callback in 'depends' must be a valid model method.
  *

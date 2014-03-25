@@ -313,6 +313,28 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->Vehicle->toDot();
 	}
 
+	public function testToDotWithRoles() {
+		$this->Vehicle = new RulesVehicle(1);
+		$this->Vehicle->toDotWithRoles(array(
+			'driver' => array(
+				'color' => 'blue'),
+			'thief' => array(
+				'color' => 'red')
+			), array(
+			'color' => 'lightgrey',
+			'activeColor' => 'green'
+			)
+		);
+		$this->Vehicle->toDotWithRoles(array(
+			'driver' => array(),
+			'thief' => array()),
+			array(
+				'color' => 'lightgrey',
+				'activeColor' => 'green'
+			)
+		);
+	}
+
 	public function testCallable() {
 		$this->Vehicle->addMethod('whatIsMyName', function(Model $model, $method, $name) {
 			return $model->alias . '-' . $method . '-' . $name;
