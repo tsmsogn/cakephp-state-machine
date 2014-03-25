@@ -409,7 +409,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @return	string			The current state of the machine
  */
 	public function getCurrentState(Model $model) {
-		return $model->field('state');
+		return ($model->field('state'))? $model->field('state') : $model->initialState;
 	}
 
 /**
