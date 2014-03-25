@@ -127,6 +127,10 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->StateMachine = $this->Vehicle->Behaviors->StateMachine;
 	}
 
+	public function testGetAllTransitions() {
+		$this->assertCount(9, $this->Vehicle->getAllTransitions());
+	}
+
 	public function testAvailableStates() {
 		$this->assertCount(6, $this->Vehicle->getAvailableStates());
 	}
@@ -140,6 +144,21 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertCount(4, $this->Vehicle->findAllByState('all'));
 		$this->assertCount(1, $this->Vehicle->findAllByState('idling'));
 		$this->assertCount(3, $this->Vehicle->findAllByState(array('idling', 'parked')));
+
+		// test with transition array
+		$testTransitions = $this->Vehicle->findAllByState('parked');
+		$this->assertTrue(is_array($testTransitions[0]['Vehicle']['Transitions']));
+		$this->assertCount(2, $testTransitions[0]['Vehicle']['Transitions']);
+
+		// test without transitions array
+		$testTransitions = $this->Vehicle->findAllByState('parked', array(), false);
+		$this->assertFalse(isset($testTransitions[0]['Vehicle']['Transitions']));
+
+		$this->Vehicle = new RulesVehicle(1);
+		$testTransitions = $this->Vehicle->findAllByState('parked');
+		$this->assertTrue(is_array($testTransitions[0]['Vehicle']['Transitions']));
+		$this->assertCount(2, $testTransitions[0]['Vehicle']['Transitions']);
+
 	}
 
 	public function testFindCountByState() {

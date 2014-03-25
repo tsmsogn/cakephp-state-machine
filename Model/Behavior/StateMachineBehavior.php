@@ -45,6 +45,7 @@ class StateMachineBehavior extends ModelBehavior {
 			$this->_availableStates[] = Inflector::camelize($state);
 		}
 	}
+
 /**
  * Sets up all the methods that builds up the state machine.
  * StateMachine->is<State>		    i.e. StateMachine->isParked()
@@ -138,6 +139,20 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * returns all transitions defined in model 
+ * @param  Model $model  The model being acted on
+ * @return array array of transitions
+ * @author Frode Marton Meling
+ */
+	public function getAllTransitions($model) {
+		$transitionArray = array();
+		foreach ($model->transitions as $transition => $data) {
+			$transitionArray[] = $transition;
+		}
+		return $transitionArray;
+	}
+
+/**
  * Returns an array of all configured states
  * @return array
  */
@@ -186,6 +201,33 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * This function will add all availble (runnable) transitions on a model and add it to the dataArray given to the function.
+ * @param  Model        $model        The model being acted on
+ * @param  array        $modelRows    The model dataArray. this is an array of Models returned from a model->find.
+ * @param  string       $role         if specified, the function will limit the transitions based on a role
+ * @return array        Returns datarray of $model with the available transitions inserted
+ * @author Frode Marton Meling
+ */
+	protected function _addTransitionsToArray($model, $modelRows, $role) {
+		if (!isset($modelRows) || $modelRows == false) {
+			return $modelRows;
+		}
+
+		$allTransitions = $this->getAllTransitions($model);
+		foreach ($modelRows as $key => $modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			// Note! We need this empty array if no transitions are availble. then we do not need to test if array exist in views.
+			$modelRows[$key][$model->alias]['Transitions'] = array();
+			foreach ($allTransitions as $transition) {
+				if ($model->can($transition, $role)) {
+					$modelRows[$key][$model->alias]['Transitions'][] = $transition;
+				}
+			}
+		}
+		return $modelRows;
+	}
+
+/**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
  * @param  Model        $model    The model being acted on
  * @param  array/string $state    The state to find. this will be checked for validity.
@@ -193,8 +235,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
-	public function findAllByState(Model $model, $state = null, $params = array()) {
-		return $this->_findByState($model, 'all', $state, $params);
+	public function findAllByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
+		$modelRows = $this->_findByState($model, 'all', $state, $params);
+		return ($withTransitions)? $this->_addTransitionsToArray($model, $modelRows, $role) : $modelRows;
 	}
 
 /**
@@ -205,8 +248,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
-	public function findFirstByState(Model $model, $state = null, $params = array()) {
-		return $this->_findByState($model, 'first', $state, $params);
+	public function findFirstByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
+		$modelRow = $this->_findByState($model, 'first', $state, $params);
+		return ($withTransitions)? $this->_addTransitionsToArray($model, ($modelRow)? array($modelRow) : false, $role) : $modelRow;
 	}
 
 /**
