@@ -488,13 +488,13 @@ EOT;
 							}
 
 							if (isset($model->transitionRules[$transition]['depends'])) {
-								$tmpDigraph .= sprintf("\t%s -> %s [ arrowType = normal, label = \" %s by %s if %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), Inflector::camelize($model->transitionRules[$transition]['depends']), $color);
+								$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s by\n %s if %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), Inflector::camelize($model->transitionRules[$transition]['depends']), $color);
 							} else {
-								$tmpDigraph .= sprintf("\t%s -> %s [ arrowType = normal, label = \" %s by %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), $color);
+								$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s by\n %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), $color);
 							}
 						}
 					} elseif (!in_array($transition, $commonTransitions)) {
-						$tmpDigraph .= sprintf("\t%s -> %s [ label = \" %s \"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition));
+						$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s \"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition));
 						$commonTransitions[] = $transition;
 					}
 				}
