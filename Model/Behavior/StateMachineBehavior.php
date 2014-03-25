@@ -470,7 +470,7 @@ EOT;
  * @return	string			The contents of the graphviz file
  */
 	public function toDotWithRoles(Model $model, $roles, $nodeColor) {
-	    $rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+		$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
 
 		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n}\n";
 		$graph = "";
@@ -479,13 +479,12 @@ EOT;
 		foreach ($model->transitions as $transition => $states) {
 			$commonTransitions = array();
 			foreach ($roles as $role => $options) {
+				$color = '#' . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)];
 				foreach ($states as $stateFrom => $stateTo) {
 					if (array_key_exists($transition, $model->transitionRules)) {
 						if (in_array($role, $model->transitionRules[$transition]['role'])) {
 							if (isset($options['color'])) {
 								$color = $options['color'];
-							} else {
-								$color = '#' . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)];
 							}
 
 							if (isset($model->transitionRules[$transition]['depends'])) {
