@@ -315,7 +315,37 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testToDotWithRoles() {
 		$this->Vehicle = new RulesVehicle(1);
-		$this->Vehicle->toDotWithRoles(array(
+
+		$expected = "digraph finite_state_machine {
+	fontsize=12;
+	node [shape = oval, style=filled, color = \"lightgrey\"];
+	style=filled;
+	label=\"Statemachine for role(s) : driver, thief\"
+	Parked -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Ignite by
+ Driver if HasKey \", color = \"blue\"];
+	Stalled -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Ignite by
+ Driver if HasKey \", color = \"blue\"];
+	Idling -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
+ Driver if AvailableParking \", color = \"blue\"];
+	FirstGear -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
+ Driver if AvailableParking \", color = \"blue\"];
+	Idling -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
+ Thief if AvailableParking \", color = \"red\"];
+	FirstGear -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
+ Thief if AvailableParking \", color = \"red\"];
+	Idling -> FirstGear [ style = bold, fontsize = 9, arrowType = normal, label = \" ShiftUp \"];
+	FirstGear -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" ShiftDown \"];
+	FirstGear -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Crash \"];
+	FirstGear -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Idle \"];
+	All -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" TurnOff \"];
+	Parked -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Hardwire by
+ Thief \", color = \"red\"];
+	Stalled -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Hardwire by
+ Thief \", color = \"red\"];
+	Parked [ color = green ]
+}
+";
+		$this->assertEqual($expected, $this->Vehicle->toDotWithRoles(array(
 			'driver' => array(
 				'color' => 'blue'),
 			'thief' => array(
@@ -324,7 +354,9 @@ class StateMachineBehaviorTest extends CakeTestCase {
 			'color' => 'lightgrey',
 			'activeColor' => 'green'
 			)
-		);
+		));
+
+		// @todo  Need to mock rand function here to be able to Asser on this
 		$this->Vehicle->toDotWithRoles(array(
 			'driver' => array(),
 			'thief' => array()),
