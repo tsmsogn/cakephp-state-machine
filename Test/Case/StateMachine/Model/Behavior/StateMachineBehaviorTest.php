@@ -309,43 +309,229 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals($this->Vehicle->initialState, $this->Vehicle->getCurrentState());
 	}
 
+	public function testAddToPrepareArrayNoRoles() {
+		$this->Vehicle = new Vehicle(1);
+
+		$dataArrayToFill = array();
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch'
+		);
+
+		// Case 1 - illegal parameters
+		$this->assertFalse($this->Vehicle->addToPrepareArray(null, $dataArrayToFill));
+		$this->assertFalse($this->Vehicle->addToPrepareArray(array(), $dataArrayToFill));
+
+		// Case 2 - adding first array
+		$expected[] = $dataToAdd;
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 3 - adding second array
+		$dataToAdd = array(
+			'stateFrom' => 'second',
+			'stateTo' => 'third',
+			'transition' => 'launch2',
+			'not_care' => 'anyvalue'
+		);
+		$expected[] = $dataToAdd;
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 4 - adding same array should not increase
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 5 - adding depends
+		$dataToAdd = array(
+			'stateFrom' => 'second',
+			'stateTo' => 'third',
+			'transition' => 'launch2',
+			'depends' => 'hasValid'
+		);
+		$expected[] = $dataToAdd;
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 6 - adding same depends should skip it
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+	}
+
+	public function testAddToPrepareArrayWithRoles() {
+		$this->Vehicle = new Vehicle(1);
+		$expected = $dataArrayToFill = array();
+
+		// Case 1 - adding role without depends, we reset the data
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'roles' => array('role1')
+		);
+		$dataArrayToFill[] = $expected[] = $dataToAdd;
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		//debug($dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 2 - adding same role twice shoud not duplicate
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 3 - Adding same state&Transition but with additional role
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'roles' => array('role2')
+		);
+		$expected = array();
+		$expected[] = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'roles' => array('role1', 'role2')
+		);
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 4 - Adding same state&Transition but with additional role
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'roles' => array('role3', 'role4')
+		);
+		$expected = array();
+		$expected[] = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'roles' => array('role1', 'role2', 'role3', 'role4')
+		);
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+	}
+
+	public function testAddToPrepareArrayWithDependsAndRoles() {
+		$this->Vehicle = new Vehicle(1);
+		$expected = $dataArrayToFill = array();
+
+		// Case 1 - adding role without depends, we reset the data
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'is_allowed',
+			'roles' => array('role1')
+		);
+		$dataArrayToFill[] = $expected[] = $dataToAdd;
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		//debug($dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 2 - adding same role twice shoud not duplicate
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 3 - Adding same state&Transition&depends but with additional role
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'is_allowed',
+			'roles' => array('role2')
+		);
+		$expected = array();
+		$expected[] = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'is_allowed',
+			'roles' => array('role1', 'role2')
+		);
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 4 - Adding same state&Transition&depends but with additional role
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'is_allowed',
+			'roles' => array('role3', 'role4')
+		);
+		$expected = array();
+		$expected[] = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'is_allowed',
+			'roles' => array('role1', 'role2', 'role3', 'role4')
+		);
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+
+		// Case 5 - Adding same state&Transition&depends but with different depends
+		$dataToAdd = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'different_is_allowed',
+			'roles' => array('role3', 'role4')
+		);
+		$expected[] = array(
+			'stateFrom' => 'initial',
+			'stateTo' => 'second',
+			'transition' => 'launch',
+			'depends' => 'different_is_allowed',
+			'roles' => array('role3', 'role4')
+		);
+		$dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
+		$this->assertEqual($expected, $dataArrayToFill);
+	}
+
 	public function testToDot() {
 		$this->Vehicle->toDot();
 	}
 
-	public function testToDotWithRoles() {
+	public function testCreateDotFileForRoles() {
 		$this->Vehicle = new RulesVehicle(1);
 
-		$expected = "digraph finite_state_machine {
+		$expected = <<<EOT
+digraph finite_state_machine {
 	fontsize=12;
-	node [shape = oval, style=filled, color = \"lightgrey\"];
+	node [shape = oval, style=filled, color = "lightgrey"];
 	style=filled;
-	label=\"Statemachine for role(s) : driver, thief\"
-	Parked -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Ignite by
- Driver if HasKey \", color = \"blue\"];
-	Stalled -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Ignite by
- Driver if HasKey \", color = \"blue\"];
-	Idling -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
- Driver if AvailableParking \", color = \"blue\"];
-	FirstGear -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
- Driver if AvailableParking \", color = \"blue\"];
-	Idling -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
- Thief if AvailableParking \", color = \"red\"];
-	FirstGear -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" Park by
- Thief if AvailableParking \", color = \"red\"];
-	Idling -> FirstGear [ style = bold, fontsize = 9, arrowType = normal, label = \" ShiftUp \"];
-	FirstGear -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" ShiftDown \"];
-	FirstGear -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Crash \"];
-	FirstGear -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Idle \"];
-	All -> Parked [ style = bold, fontsize = 9, arrowType = normal, label = \" TurnOff \"];
-	Parked -> Idling [ style = bold, fontsize = 9, arrowType = normal, label = \" Hardwire by
- Thief \", color = \"red\"];
-	Stalled -> Stalled [ style = bold, fontsize = 9, arrowType = normal, label = \" Hardwire by
- Thief \", color = \"red\"];
-	Parked [ color = green ]
+	label="Statemachine for role(s) : Driver, Thief"
+	"Parked" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Ignite by (Driver)
+if Has Key" color = "blue"];
+	"Stalled" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Ignite by (Driver)
+if Has Key" color = "blue"];
+	"Idling" -> "Parked" [ style = bold, fontsize = 9, arrowType = normal, label = "Park by All
+if Available Parking" ];
+	"First Gear" -> "Parked" [ style = bold, fontsize = 9, arrowType = normal, label = "Park by All
+if Available Parking" ];
+	"Idling" -> "First Gear" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Up by All" ];
+	"First Gear" -> "Second Gear" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Up by All" ];
+	"Second Gear" -> "Third Gear" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Up by All" ];
+	"First Gear" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Down by All" ];
+	"Second Gear" -> "First Gear" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Down by All" ];
+	"Third Gear" -> "Second Gear" [ style = bold, fontsize = 9, arrowType = normal, label = "Shift Down by All" ];
+	"First Gear" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Crash by All" ];
+	"Second Gear" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Crash by All" ];
+	"Third Gear" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Crash by All" ];
+	"First Gear" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Idle by All" ];
+	"All" -> "Parked" [ style = bold, fontsize = 9, arrowType = normal, label = "Turn Off by All" ];
+	"Parked" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Hardwire by (Thief)" color = "red"];
+	"Stalled" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Hardwire by (Thief)" color = "red"];
+
+	"Parked" [ color = green ]
 }
-";
-		$this->assertEqual($expected, $this->Vehicle->toDotWithRoles(array(
+
+EOT;
+		$this->assertEqual($expected, $this->Vehicle->createDotFileForRoles(array(
 			'driver' => array(
 				'color' => 'blue'),
 			'thief' => array(
@@ -355,16 +541,6 @@ class StateMachineBehaviorTest extends CakeTestCase {
 			'activeColor' => 'green'
 			)
 		));
-
-		// @todo  Need to mock rand function here to be able to Asser on this
-		$this->Vehicle->toDotWithRoles(array(
-			'driver' => array(),
-			'thief' => array()),
-			array(
-				'color' => 'lightgrey',
-				'activeColor' => 'green'
-			)
-		);
 	}
 
 	public function testCallable() {

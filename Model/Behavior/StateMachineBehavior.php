@@ -451,6 +451,49 @@ EOT;
 	}
 
 /**
+ * This method prepares an array for each transition in the statemachine making it easier to iterate throug the machine for
+ * output to various formats
+ *
+ * @param	Model	$model		 The model being acted on
+ * @param	array	$roles		 The role(s) executing the transition change. with an options array.
+ *                               'role' => array('color' => color of the arrows)
+ *                               In the future many more Graphviz options can be added
+ * @return	array			     returns an array of all transitions
+ * @author  Frode Marton Meling <fm@saltship.com>
+ */
+	public function prepareForDotWithRoles(Model $model, $roles) {
+		$preparedForDotArray = array();
+		foreach ($model->transitions as $transition => $states) {
+			foreach ($roles as $role => $options) {
+				foreach ($states as $stateFrom => $stateTo) {
+					// if roles are not defined in transitionRules we add or if roles are defined, at least one needs to be present
+					if (!isset($model->transitionRules[$transition]['role']) || (isset($model->transitionRules[$transition]['role']) && $this->_containsAnyRoles($model->transitionRules[$transition]['role'], $roles))) {
+						$dataToPrepare = array();
+						$dataToPrepare = array(
+							'stateFrom' => $stateFrom,
+							'stateTo' => $stateTo,
+							'transition' => $transition
+						);
+						if (isset($model->transitionRules[$transition]['role'])) {
+							//debug($role);
+							//debug($model->transitionRules[$transition]['role']);
+							if (in_array($role, $model->transitionRules[$transition]['role'])) {
+								$dataToPrepare['roles'] = array($role);
+							}
+						}
+						if (isset($model->transitionRules[$transition]['depends'])) {
+							$dataToPrepare['depends'] = $model->transitionRules[$transition]['depends'];
+						}
+						// we do not add if role is given as transitionRule, but part is not in it.
+						$preparedForDotArray = $this->addToPrepareArray($model, $dataToPrepare, $preparedForDotArray);
+					}
+				}
+			}
+		}
+		return $preparedForDotArray;
+	}
+
+/**
  * Method to return contents for a GV file based on array of roles. That means you can send
  * an array of roles (with options) and this method will calculate the presentation that
  * can be made into graphics by:
@@ -463,49 +506,204 @@ EOT;
  * @param	array	$role		 The role(s) executing the transition change. with an options array.
  *                               'role' => array('color' => color of the arrows)
  *                               In the future many more Graphviz options can be added
- * @param  array    $nodeOptions Options for nodes
+ * @param  array    $dotOptions Options for nodes
  * 								 'color' => 'color of all nodes'
  * 								 'activeColor' => 'the color you want the active node to have'
- * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
  * @return	string			The contents of the graphviz file
+ * @author  Frode Marton Meling <fm@saltship.com>
  */
-	public function toDotWithRoles(Model $model, $roles, $nodeColor) {
-		$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+	public function createDotFileForRoles(Model $model, $roles, $dotOptions) {
+		//$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+		$transitionsArray = $this->prepareForDotWithRoles($model, $roles);
+		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n%s}\n";
+		$activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState($model)) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ]\n";
 
-		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n}\n";
-		$graph = "";
-		$tmpDigraph = "";
-		$rolesDone = array();
-		foreach ($model->transitions as $transition => $states) {
-			$commonTransitions = array();
-			foreach ($roles as $role => $options) {
-				$color = '#' . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)] . $rand[rand(0, 15)];
-				foreach ($states as $stateFrom => $stateTo) {
-					if (array_key_exists($transition, $model->transitionRules)) {
-						if (in_array($role, $model->transitionRules[$transition]['role'])) {
-							if (isset($options['color'])) {
-								$color = $options['color'];
-							}
+		//$node = "\t%s -> %s [ margin= \"0.9,0.9\" style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\"%s headlabel=\"%s\" taillabel=\"%s\"];\n"; // with head and tail labels
+		$node = "\t\"%s\" -> \"%s\" [ style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\" %s];\n";
+		$dotNodes = "";
 
-							if (isset($model->transitionRules[$transition]['depends'])) {
-								$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s by\n %s if %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), Inflector::camelize($model->transitionRules[$transition]['depends']), $color);
-							} else {
-								$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s by\n %s \", color = \"%s\"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition), Inflector::camelize($role), $color);
-							}
-						}
-					} elseif (!in_array($transition, $commonTransitions)) {
-						$tmpDigraph .= sprintf("\t%s -> %s [ style = bold, fontsize = 9, arrowType = normal, label = \" %s \"];\n", Inflector::camelize($stateFrom), Inflector::camelize($stateTo), Inflector::camelize($transition));
-						$commonTransitions[] = $transition;
-					}
-				}
-				if (!in_array($role, $rolesDone)) {
-					$rolesDone[] = $role;
-				}
+		foreach ($transitionsArray as $transition) {
+			$dotNodes .= sprintf($node,
+				Inflector::humanize($transition['stateFrom']),
+				Inflector::humanize($transition['stateTo']),
+				Inflector::humanize($transition['transition']),
+				(isset($transition['roles']) && (!$this->_containsAllRoles($transition['roles'], $roles) || (count($roles) == 1)))? 'by (' . Inflector::humanize(implode(' or ', $transition['roles'])) . ')' : 'by All',
+				(isset($transition['depends']))? "\nif " . Inflector::humanize($transition['depends']) : '',
+				(isset($transition['roles']) && count($transition['roles']) == 1)? "color = \"" . $roles[$transition['roles'][0]]['color'] . "\"" : ''//,
+				//'when' . Inflector::camelize($transition['stateTo']),
+				//'on' . Inflector::camelize($transition['stateFrom'])
+			);
+		}
+		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for role(s) : ' . Inflector::humanize(implode(', ', $this->_getAllRoles($roles))), $dotNodes, $activeState);
+		return $graph;
+	}
+
+/**
+ * This function is used to add transitions to Array. This tests for conditions and makes sure duplicates are not added.
+ * @param  Model	$model		   The model being acted on
+ * @param  array $data          An array of a transition to be added
+ * @param  array $prepareArray  The current array to populate
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	public function addToPrepareArray(Model $model, $data, $prepareArray) {
+		if (!is_array($data)) {
+			return false;
+		}
+
+		if (!$this->_stateAndTransitionExist($data)) {
+			return false;
+		}
+
+		// Check if we are preparing an object with states, transitions and depends
+		if ($this->_stateTransitionAndDependsExist($data)) {
+			$existingDataKey = $this->_stateTransitionAndDependsInArray($data, $prepareArray);
+			if ($existingDataKey === false) {
+				$prepareArray[] = $data;
+			} elseif (isset($data['roles'])) {
+				$this->_addRoles($data['roles'], $prepareArray[$existingDataKey]);
+			}
+			return $prepareArray;
+		}
+		$existingDataKey = $this->_stateAndTransitionInArray($data, $prepareArray);
+		if ($existingDataKey !== false) {
+			if (isset($data['roles'])) {
+				$this->_addRoles($data['roles'], $prepareArray[$existingDataKey]);
+			}
+			return $prepareArray;
+		}
+		$prepareArray[] = $data;
+
+		return $prepareArray;
+	}
+
+/**
+ * This helperfunction checks if all roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
+ * I did not find a php method for this, so made it myself
+ * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
+ * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+ * @return boolean             Returns true if all roles are present, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _containsAllRoles($roles, $allRoles) {
+		foreach ($allRoles as $role => $options) {
+			if (!in_array($role, $roles)) {
+				return false;
 			}
 		}
-		$tmpDigraph .= "\t" . Inflector::camelize($this->getCurrentState($model)) . " [ color = " . $nodeColor['activeColor'] . " ]";
-		$graph .= sprintf($digraph, $nodeColor['color'], 'Statemachine for role(s) : ' . join(', ', $rolesDone), $tmpDigraph);
-		return $graph;
+		return true;
+	}
+
+/**
+ * This helperfunction checks if any of the roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
+ * I did not find a php method for this, so made it myself
+ * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
+ * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+ * @return boolean             Returns true if just one of the roles are present, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _containsAnyRoles($roles, $allRoles) {
+		$atleastOne = false;
+		foreach ($allRoles as $role => $options) {
+			if (in_array($role, $roles)) {
+				$atleastOne = true;
+			}
+		}
+		return $atleastOne;
+	}
+
+/**
+ * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
+ * I did not find a php method for this, so made it myself
+ * @param  Array $roles      This is just an array of roles like array('role1', 'role2'...)
+ * @return Array             Returns an array of roles like array('role1', 'role2'...)
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _getAllRoles($roles) {
+		$arrayToReturn = array();
+		foreach ($roles as $role => $option) {
+			$arrayToReturn[] = $role;
+		}
+		return $arrayToReturn;
+	}
+
+/**
+ * This helperfunction adds a role to an array. It checks for duplicates and only adds if it is not already in array
+ * If also checks that the resultArray is valid and that there are roles there to begin with
+ * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
+ * @param  Array &$resultArray This function writes to this parameter by reference
+ * @return boolean             Returns true if added, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _addRoles($roles, &$resultArray) {
+		$addedAtleastOne = false;
+		foreach ($roles as $role) {
+			if (!isset($resultArray['roles']) || isset($resultArray['roles']) && !in_array($role, $resultArray['roles'])) {
+				$resultArray['roles'][] = $role;
+				$addedAtleastOne = true;
+			}
+		}
+		return $addedAtleastOne;
+	}
+
+/**
+ * This helperfunction checks if state and transition is present in the array
+ * @param  array $data  The array to check
+ * @return boolean       true if array is valid, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _stateAndTransitionExist($data) {
+		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition'])) {
+			return true;
+		}
+		return false;
+	}
+
+/**
+ * This helperfunction checks if state, transition and depends exist in array
+ * @param  array $data  The array to check
+ * @return boolean      True if state, transition and depends exist in array, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _stateTransitionAndDependsExist($data) {
+		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition']) && isset($data['depends'])) {
+			return true;
+		}
+		return false;
+	}
+
+/**
+ * This helperfunction checks if state and transition is present in prepareArray. this is used to prevent adding duplicates
+ * @param  array $data         The array for testing
+ * @param  array $prepareArray The array to check against
+ * @return boolean             index in array if state and transition is present in prepareArray, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _stateAndTransitionInArray($data, $prepareArray) {
+		foreach ($prepareArray as $key => $value) {
+			if (($value['stateFrom'] == $data['stateFrom']) && ($value['stateTo'] == $data['stateTo']) && ($value['transition'] == $data['transition'])) {
+				return $key;
+			}
+		}
+		return false;
+	}
+
+/**
+ * This helperfunction checks if state, transition and depends is present in prepareArray. this is used to prevent adding duplicates
+ * @param  array $data         The array for testing
+ * @param  array $prepareArray The array to check against
+ * @return boolean             the index in array if state, transition and depends is present in prepareArray, otherwise false
+ * @author Frode Marton Meling <fm@saltship.com>
+ */
+	protected function _stateTransitionAndDependsInArray($data, $prepareArray) {
+		foreach ($prepareArray as $key => $value) {
+			if (!isset($value['depends'])) {
+				continue;
+			}
+			if (($value['stateFrom'] == $data['stateFrom']) && ($value['stateTo'] == $data['stateTo']) && ($value['transition'] == $data['transition']) && ($value['depends'] == $data['depends'])) {
+				return $key;
+			}
+		}
+		return false;
 	}
 
 /**
