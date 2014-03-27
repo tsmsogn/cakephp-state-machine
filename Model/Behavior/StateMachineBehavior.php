@@ -124,6 +124,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Updates the model's state when a $model->save() call is performed
+ * 
  * @param	Model	$model		The model being acted on
  * @param	boolean $created	Whether or not the model was created
  * @param	array	$options	Options passed to save
@@ -140,6 +141,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * returns all transitions defined in model 
+ * 
  * @param  Model $model  The model being acted on
  * @return array array of transitions
  * @author Frode Marton Meling
@@ -154,6 +156,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Returns an array of all configured states
+ * 
  * @return array
  */
 	public function getAvailableStates() {
