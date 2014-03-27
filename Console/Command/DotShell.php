@@ -1,29 +1,13 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- *
- * Licensed under The MIT License
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
- * @since         DebugKit 1.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
 App::uses('String', 'Utility');
 
 /**
- * Benchmark Shell Class
+ * Dot Shell Class
  *
- * Provides basic benchmarking of application requests
- * functionally similar to Apache AB
- *
- * @since         DebugKit 1.0
- * @todo Print/export time detail information
- * @todo Export/graphing of data to .dot format for graphviz visualization
- * @todo Make calculated results round to leading significant digit position of std dev.
+ * Simple dot generation of PNG files from state-machine
  */
 class DotShell extends Shell {
 

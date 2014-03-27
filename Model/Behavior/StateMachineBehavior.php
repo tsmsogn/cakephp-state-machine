@@ -162,6 +162,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * checks if $state or Array of states are valid ones
+ * 
  * @param  string/array $state a string representation of state or a array of states
  * @return boolean
  * @author Frode Marton Meling
@@ -182,6 +183,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * 
  * @param  Model        $model    The model being acted on
  * @param  string       $type     find type (ref. CakeModel)
  * @param  array/string $state    The state to find. this will be checked for validity.
@@ -202,6 +204,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * This function will add all availble (runnable) transitions on a model and add it to the dataArray given to the function.
+ * 
  * @param  Model        $model        The model being acted on
  * @param  array        $modelRows    The model dataArray. this is an array of Models returned from a model->find.
  * @param  string       $role         if specified, the function will limit the transitions based on a role
@@ -229,6 +232,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * 
  * @param  Model        $model    The model being acted on
  * @param  array/string $state    The state to find. this will be checked for validity.
  * @param  array        $params   Regular $params array for CakeModel->find
@@ -242,6 +246,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Finds first record in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * 
  * @param  Model  $model    The model being acted on
  * @param  array/string $state    The state to find. this will be checked for validity.
  * @param  array  $params   Regular $params array for CakeModel->find
@@ -255,6 +260,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Finds count of records in a specific state. Supports additional conditions, but will overwrite conditions with state
+ * 
  * @param  Model  $model    The model being acted on
  * @param  array/string $state    The state to find. this will be checked for validity.
  * @param  array  $params   Regular $params array for CakeModel->find
@@ -405,6 +411,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Returns the current state of the machine
+ * 
  * @param	Model	$model	The model being acted on
  * @return	string			The current state of the machine
  */
@@ -414,6 +421,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 /**
  * Returns the previous state of the machine
+ * 
  * @param	Model	$model	The model being acted on
  * @return	string			The previous state of the machine
  */
@@ -540,10 +548,13 @@ EOT;
 
 /**
  * This function is used to add transitions to Array. This tests for conditions and makes sure duplicates are not added.
+ * 
  * @param  Model	$model		   The model being acted on
  * @param  array $data          An array of a transition to be added
  * @param  array $prepareArray  The current array to populate
  * @author Frode Marton Meling <fm@saltship.com>
+ *
+ * @todo - Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing
  */
 	public function addToPrepareArray(Model $model, $data, $prepareArray) {
 		if (!is_array($data)) {
@@ -579,10 +590,12 @@ EOT;
 /**
  * This helperfunction checks if all roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
+ * 
  * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
  * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
  * @return boolean             Returns true if all roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _containsAllRoles($roles, $allRoles) {
 		foreach ($allRoles as $role => $options) {
@@ -596,10 +609,12 @@ EOT;
 /**
  * This helperfunction checks if any of the roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
+ * 
  * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
  * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
  * @return boolean             Returns true if just one of the roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _containsAnyRoles($roles, $allRoles) {
 		$atleastOne = false;
@@ -614,9 +629,11 @@ EOT;
 /**
  * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
+ * 
  * @param  Array $roles      This is just an array of roles like array('role1', 'role2'...)
  * @return Array             Returns an array of roles like array('role1', 'role2'...)
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _getAllRoles($roles) {
 		$arrayToReturn = array();
@@ -629,10 +646,12 @@ EOT;
 /**
  * This helperfunction adds a role to an array. It checks for duplicates and only adds if it is not already in array
  * If also checks that the resultArray is valid and that there are roles there to begin with
+ * 
  * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
  * @param  Array &$resultArray This function writes to this parameter by reference
  * @return boolean             Returns true if added, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _addRoles($roles, &$resultArray) {
 		$addedAtleastOne = false;
@@ -647,9 +666,11 @@ EOT;
 
 /**
  * This helperfunction checks if state and transition is present in the array
+ * 
  * @param  array $data  The array to check
  * @return boolean       true if array is valid, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _stateAndTransitionExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition'])) {
@@ -660,9 +681,11 @@ EOT;
 
 /**
  * This helperfunction checks if state, transition and depends exist in array
+ * 
  * @param  array $data  The array to check
  * @return boolean      True if state, transition and depends exist in array, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _stateTransitionAndDependsExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition']) && isset($data['depends'])) {
@@ -673,10 +696,12 @@ EOT;
 
 /**
  * This helperfunction checks if state and transition is present in prepareArray. this is used to prevent adding duplicates
+ * 
  * @param  array $data         The array for testing
  * @param  array $prepareArray The array to check against
  * @return boolean             index in array if state and transition is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _stateAndTransitionInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
@@ -689,10 +714,12 @@ EOT;
 
 /**
  * This helperfunction checks if state, transition and depends is present in prepareArray. this is used to prevent adding duplicates
+ * 
  * @param  array $data         The array for testing
  * @param  array $prepareArray The array to check against
  * @return boolean             the index in array if state, transition and depends is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
  */
 	protected function _stateTransitionAndDependsInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
