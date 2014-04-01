@@ -648,23 +648,6 @@ EOT;
 	}
 
 /**
- * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
- * I did not find a php method for this, so made it myself
- * 
- * @param  Array $roles      This is just an array of roles like array('role1', 'role2'...)
- * @return Array             Returns an array of roles like array('role1', 'role2'...)
- * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
- */
-	protected function _getAllRoles($roles) {
-		$arrayToReturn = array();
-		foreach ($roles as $role => $option) {
-			$arrayToReturn[] = $role;
-		}
-		return $arrayToReturn;
-	}
-
-/**
  * This helperfunction adds a role to an array. It checks for duplicates and only adds if it is not already in array
  * If also checks that the resultArray is valid and that there are roles there to begin with
  * 
