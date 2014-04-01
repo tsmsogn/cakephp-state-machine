@@ -545,8 +545,26 @@ EOT;
 				//'on' . Inflector::camelize($transition['stateFrom'])
 			);
 		}
-		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for role(s) : ' . Inflector::humanize(implode(', ', $this->_getAllRoles($roles))), $dotNodes, $activeState);
+		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($model, $roles))), $dotNodes, $activeState);
 		return $graph;
+	}
+
+/**
+ * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
+ * I did not find a php method for this, so made it myself
+ * 
+ * @param	Model	$model		 The model being acted on
+ * @param  Array $roles      This is just an array of roles like array('role1', 'role2'...)
+ * @return Array             Returns an array of roles like array('role1', 'role2'...)
+ * @author Frode Marton Meling <fm@saltship.com>
+ * @todo   Add separate tests
+ */
+	public function getAllRoles(Model $model, $roles) {
+		$arrayToReturn = array();
+		foreach ($roles as $role => $option) {
+			$arrayToReturn[] = $role;
+		}
+		return $arrayToReturn;
 	}
 
 /**
