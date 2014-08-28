@@ -285,7 +285,7 @@ class StateMachineBehavior extends ModelBehavior {
 		$transition = $this->_deFormalizeById($transition);
 		$modelRow = $model->findById($id);
 		if ($modelRow) {
-			$this->id = $modelRow[$model->alias]['id'];
+			$model->id = $modelRow[$model->alias]['id'];
 			return $this->transition($model, $transition, $role);
 		}
 	}
