@@ -135,6 +135,13 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertCount(6, $this->Vehicle->getAvailableStates());
 	}
 
+	public function testTransitionById() {
+		$vehicle = $this->Vehicle->findById(1);
+		$this->Vehicle->id = $vehicle['Vehicle']['id'];
+		$this->Vehicle->igniteById(1);
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+	}
+
 	public function testFindAllByState() {
 		$this->assertFalse($this->Vehicle->findAllByState());
 		$this->assertFalse($this->Vehicle->findAllByState('illegal_state_should_not_be_possible'));
@@ -504,7 +511,8 @@ digraph finite_state_machine {
 	fontsize=12;
 	node [shape = oval, style=filled, color = "lightgrey"];
 	style=filled;
-	label="Statemachine for role(s) : Driver, Thief"
+	label="Statemachine for RulesVehicle role(s) : Driver, Thief"
+	"Parked" [ color = green ];
 	"Parked" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Ignite by (Driver)
 if Has Key" color = "blue"];
 	"Stalled" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Ignite by (Driver)
@@ -526,8 +534,6 @@ if Available Parking" ];
 	"All" -> "Parked" [ style = bold, fontsize = 9, arrowType = normal, label = "Turn Off by All" ];
 	"Parked" -> "Idling" [ style = bold, fontsize = 9, arrowType = normal, label = "Hardwire by (Thief)" color = "red"];
 	"Stalled" -> "Stalled" [ style = bold, fontsize = 9, arrowType = normal, label = "Hardwire by (Thief)" color = "red"];
-
-	"Parked" [ color = green ]
 }
 
 EOT;
@@ -541,6 +547,16 @@ EOT;
 			'activeColor' => 'green'
 			)
 		));
+		// debug($expected, $this->Vehicle->createDotFileForRoles(array(
+		// 	'driver' => array(
+		// 		'color' => 'blue'),
+		// 	'thief' => array(
+		// 		'color' => 'red')
+		// 	), array(
+		// 	'color' => 'lightgrey',
+		// 	'activeColor' => 'green'
+		// 	)
+		// ));
 	}
 
 	public function testCallable() {

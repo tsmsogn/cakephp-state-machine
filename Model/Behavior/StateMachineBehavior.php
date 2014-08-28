@@ -78,6 +78,7 @@ class StateMachineBehavior extends ModelBehavior {
 			$this->mapMethods['/can' . Inflector::camelize($transition) . '/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
+			$this->mapMethods['/' . $transitionFunction . 'ById' . '/'] = 'transitionById';
 			$this->mapMethods['/' . $transitionFunction . '/'] = 'transition';
 		}
 	}
@@ -118,7 +119,6 @@ class StateMachineBehavior extends ModelBehavior {
 		if (! isset($this->settings[$model->alias]['methods'][$method])) {
 			return array('unhandled');
 		}
-
 		return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
 	}
 
@@ -272,6 +272,22 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function findCountByState(Model $model, $state = null, $params = array()) {
 		return $this->_findByState($model, 'count', $state, $params);
+	}
+
+/**
+ * Allows moving from one state to another by giving the Id of the Model entity to transition
+ * @param Model $model The model being acted on
+ * @param integer $id table id field to find object
+ * @param string $role The rule executing the transition
+ * @param string $transition The transition being initiated
+ */
+	public function transitionById(Model $model, $transition, $id = null, $role = null) {
+		$transition = $this->_deFormalizeById($transition);
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$this->id = $modelRow[$model->alias]['id'];
+			return $this->transition($model, $transition, $role);
+		}
 	}
 
 /**
@@ -829,6 +845,17 @@ EOT;
  */
 	protected function _deFormalizeMethodName($name) {
 		return Inflector::underscore(preg_replace('#^(can|is)#', '', $name));
+	}
+
+/**
+ * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
+ * the remaining text.
+ *
+ * @param	string	$name	The model name
+ * @return	string			The deformalized method name
+ */
+	protected function _deFormalizeById($name) {
+		return Inflector::underscore(preg_replace('#By[a-zA-Z]+$#', '', $name));
 	}
 
 /**
