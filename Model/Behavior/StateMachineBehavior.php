@@ -527,7 +527,7 @@ EOT;
 		//$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
 		$transitionsArray = $this->prepareForDotWithRoles($model, $roles);
 		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n%s}\n";
-		$activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState($model)) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ]\n";
+		$activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState($model)) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
 
 		//$node = "\t%s -> %s [ margin= \"0.9,0.9\" style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\"%s headlabel=\"%s\" taillabel=\"%s\"];\n"; // with head and tail labels
 		$node = "\t\"%s\" -> \"%s\" [ style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\" %s];\n";
@@ -545,7 +545,7 @@ EOT;
 				//'on' . Inflector::camelize($transition['stateFrom'])
 			);
 		}
-		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($model, $roles))), $dotNodes, $activeState);
+		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for ' . Inflector::humanize($model->alias) . ' role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($model, $roles))), $activeState, $dotNodes);
 		return $graph;
 	}
 
