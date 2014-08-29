@@ -136,10 +136,17 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testTransitionById() {
-		$vehicle = $this->Vehicle->findById(1);
-		$this->Vehicle->id = $vehicle['Vehicle']['id'];
 		$this->Vehicle->igniteById(1);
-		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
+		$this->assertEquals("", $this->Vehicle->getLastRoleById(1));
+		$this->Vehicle->shiftUpById(1);
+		$this->assertEquals("first_gear", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("idling", $this->Vehicle->getPreviousStateById(1));
+		$this->Vehicle->shiftUpById(1);
+		$this->assertEquals("second_gear", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("first_gear", $this->Vehicle->getPreviousStateById(1));
 	}
 
 	public function testFindAllByState() {
@@ -606,6 +613,12 @@ EOT;
 		$this->assertFalse($this->Vehicle->canHardwire('driver'));
 
 		$this->Vehicle->ignite('driver');
+
+		$this->Vehicle->igniteById(1, 'driver');
+		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
+		$this->assertEquals("driver", $this->Vehicle->getLastRoleById(1));
 
 		$this->assertFalse($this->Vehicle->canPark('driver'));
 		$this->assertTrue($this->Vehicle->canPark('thief'));

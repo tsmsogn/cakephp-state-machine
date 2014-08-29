@@ -305,7 +305,6 @@ class StateMachineBehavior extends ModelBehavior {
 	public function transition(Model $model, $transition, $role = null) {
 		$transition = Inflector::underscore($transition);
 		$state = $this->getStates($model, $transition);
-
 		if (! $state || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
 		}
@@ -314,6 +313,8 @@ class StateMachineBehavior extends ModelBehavior {
 
 		$model->read(null, $model->id);
 		$model->set('previous_state', $model->getCurrentState());
+		$model->set('last_transition', $transition);
+		$model->set('last_role', $role);
 		$model->set('state', $state);
 		$retval = $model->save();
 
@@ -429,6 +430,22 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * Returns the current state of the machine givend its id
+ * 
+ * @param	Model	$model	The model being acted on
+ * @param	integer	$id	The id of the item to check
+ * @return	string			The current state of the machine
+ */
+	public function getCurrentStateById(Model $model, $id) {
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->getCurrentState($model);
+		}
+		return false;
+	}
+
+/**
  * Returns the current state of the machine
  * 
  * @param	Model	$model	The model being acted on
@@ -439,6 +456,22 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
+ * Returns the current state of the machine givend its id
+ * 
+ * @param	Model	$model	The model being acted on
+ * @param	integer	$id	The id of the item to check
+ * @return	string			The current state of the machine
+ */
+	public function getPreviousStateById(Model $model, $id) {
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->getPreviousState($model);
+		}
+		return false;
+	}
+
+/**
  * Returns the previous state of the machine
  * 
  * @param	Model	$model	The model being acted on
@@ -446,6 +479,58 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function getPreviousState(Model $model) {
 		return $model->field('previous_state');
+	}
+
+/**
+ * Returns the last transition ran of the machine givend its id
+ * 
+ * @param	Model	$model	The model being acted on
+ * @param	integer	$id	The id of the item to check
+ * @return	string			The current state of the machine
+ */
+	public function getLastTransitionById(Model $model, $id) {
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->getLastTransition($model);
+		}
+		return false;
+	}
+
+/**
+ * Returns the last transition ran
+ * 
+ * @param	Model	$model	The model being acted on
+ * @return	string			The transition last ran of the machine
+ */
+	public function getLastTransition(Model $model) {
+		return $model->field('last_transition');
+	}
+
+/**
+ * Returns the role that ran last transition of the machine givend its id
+ * 
+ * @param	Model	$model	The model being acted on
+ * @param	integer	$id	The id of the item to check
+ * @return	string			The current state of the machine
+ */
+	public function getLastRoleById(Model $model, $id) {
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->getLastRole($model);
+		}
+		return false;
+	}
+
+/**
+ * Returns the role that ran the last transition
+ * 
+ * @param	Model	$model	The model being acted on
+ * @return	string			The role that last ran a transition of the machine
+ */
+	public function getLastRole(Model $model) {
+		return $model->field('last_role');
 	}
 
 /**
