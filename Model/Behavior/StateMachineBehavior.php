@@ -78,8 +78,8 @@ class StateMachineBehavior extends ModelBehavior {
 			$this->mapMethods['/can' . Inflector::camelize($transition) . '/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
-			$this->mapMethods['/' . $transitionFunction . 'ById' . '/'] = 'transitionById';
-			$this->mapMethods['/' . $transitionFunction . '/'] = 'transition';
+			$this->mapMethods['/^' . $transitionFunction . 'ById' . '$/'] = 'transitionById';
+			$this->mapMethods['/^' . $transitionFunction . '$/'] = 'transition';
 		}
 	}
 
@@ -364,7 +364,6 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function can(Model $model, $transition, $role = null) {
 		$transition = $this->_deFormalizeMethodName($transition);
-
 		if (! $this->getStates($model, $transition) || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
 		}
