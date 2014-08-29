@@ -50,15 +50,16 @@ before_script:
         );
     }" > ../cakephp/app/Config/database.php
 script:
-  - mkdir -p ../cakephp/app/build/logs
-  - cd ../cakephp/app && ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --config-set installed_paths Plugin/$PLUGIN_NAME/vendor/cakephp/cakephp-codesniffer
-  - cd ../cakephp/app && ./Plugin/StateMachine/vendor/bin/phpcs --standard=CakePHP --ignore=*/vendor/* Plugin/$PLUGIN_NAME
-  - cd ../cakephp/app/ && ./Console/cake test $PLUGIN_NAME StateMachine/Model/Behavior/StateMachineBehavior --stderr --coverage-clover build/logs/clover.xml
+  - cd ../cakephp/app
+  - mkdir -p build/logs
+  - ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --config-set installed_paths Plugin/$PLUGIN_NAME/vendor/cakephp/cakephp-codesniffer
+  - ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --standard=CakePHP --ignore=*/vendor/* Plugin/$PLUGIN_NAME
+  - ./Console/cake test $PLUGIN_NAME $PLUGIN_NAME/Model/Behavior/StateMachineBehavior --stderr --coverage-clover build/logs/clover.xml
 
 after_script:
-  - cd ../cakephp/app && php Plugin/$PLUGIN_NAME/vendor/bin/coveralls -v
-  - cd ../cakephp/app && wget https://scrutinizer-ci.com/ocular.phar
-  - cd ../cakephp/app && php ocular.phar code-coverage:upload --format=php-clover --repository g/$TRAVIS_REPO_SLUG --revision $TRAVIS_COMMIT build/logs/clover.xml
+  - php Plugin/$PLUGIN_NAME/vendor/bin/coveralls -v
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover --repository g/$TRAVIS_REPO_SLUG --revision $TRAVIS_COMMIT build/logs/clover.xml
 
 notifications:
   email: false
