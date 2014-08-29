@@ -1,65 +1,37 @@
 language: php
 
 php:
+  - 5.3
   - 5.4
   - 5.5
 
 env:
   global:
-    - REPO_NAME=cakephp-state-machine
     - PLUGIN_NAME=StateMachine
+    - REQUIRE=""
+
   matrix:
-    - CAKE_VERSION=2.2.0
-    - CAKE_VERSION=2.3.0
-    - CAKE_VERSION=2.4.0
+    - DB=mysql CAKE_VERSION=2.4
+    - DB=mysql CAKE_VERSION=2.5
 
-before_install:
-  - composer self-update
-
-install:
-  - composer install --dev --prefer-source
-  - git clone git://github.com/cakephp/cakephp ../cakephp && cd ../cakephp && git checkout $CAKE_VERSION
-  - cp -R ../$REPO_NAME  ../cakephp/app/Plugin/$PLUGIN_NAME
-  - chmod -R 770 ../cakephp/app/tmp
-  - sh -c "composer global require 'phpunit/phpunit=3.7.33'"
-  - sh -c "ln -s ~/.composer/vendor/phpunit/phpunit/PHPUnit ../cakephp/vendors/PHPUnit"
+matrix:
+  include:
+    - php: 5.4
+      env:
+        - COVERALLS=1
+    - php: 5.4
+      env:
+        - PHPCS=1
 
 before_script:
-  - mysql -e 'CREATE DATABASE cakephp_test;'
-  - echo "CakePlugin::load('$PLUGIN_NAME');" >> ../cakephp/app/Config/bootstrap.php
-  - set +H
-  - echo "<?php
-    class DATABASE_CONFIG {
-        public \$default = array(
-            'datasource' => 'Database/Mysql',
-            'persistent' => false,
-            'host' => '0.0.0.0',
-            'login' => 'travis',
-            'password' => '',
-            'database' => 'cakephp_test',
-            'prefix' => ''
-        );
-        public \$test = array(
-            'datasource' => 'Database/Mysql',
-            'persistent' => false,
-            'host' => '0.0.0.0',
-            'login' => 'travis',
-            'password' => '',
-            'database' => 'cakephp_test',
-            'prefix' => ''
-        );
-    }" > ../cakephp/app/Config/database.php
-script:
-  - cd ../cakephp/app
-  - mkdir -p build/logs
-  - ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --config-set installed_paths Plugin/$PLUGIN_NAME/vendor/cakephp/cakephp-codesniffer
-  - ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --standard=CakePHP --ignore=*/vendor/* Plugin/$PLUGIN_NAME
-  - ./Console/cake test $PLUGIN_NAME $PLUGIN_NAME/Model/Behavior/StateMachineBehavior --stderr --coverage-clover build/logs/clover.xml
+  - git clone -b master https://github.com/FriendsOfCake/travis.git --depth 1 ../travis
+  - ../travis/before_script.sh
 
-after_script:
-  - php Plugin/$PLUGIN_NAME/vendor/bin/coveralls -v
-  - wget https://scrutinizer-ci.com/ocular.phar
-  - php ocular.phar code-coverage:upload --format=php-clover --repository g/$TRAVIS_REPO_SLUG --revision $TRAVIS_COMMIT build/logs/clover.xml
+script:
+  - ../travis/script.sh
+
+after_success:
+  - ../travis/after_success.sh
 
 notifications:
   email: false
