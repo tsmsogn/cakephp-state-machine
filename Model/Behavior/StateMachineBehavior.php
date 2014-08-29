@@ -52,8 +52,8 @@ class StateMachineBehavior extends ModelBehavior {
  * StateMachine->can<Transition>	i.e. StateMachine->canShiftGear()
  * StateMachine-><transition>		i.e. StateMachine->shiftGear();
  *
- * @param	Model	$model The model being used
- * @param	array	$config	Configuration for the Behavior
+ * @param Model $model The model being used
+ * @param array $config Configuration for the Behavior
  * @return void
  */
 	public function setup(Model $model, $config = array()) {
@@ -90,11 +90,11 @@ class StateMachineBehavior extends ModelBehavior {
  * $data = $this->Vehicle->myMethod();
  * }}}
  *
- * @param	Model		$model	The model being acted on
- * @param	string		$method	The method na,e
- * @param	Callable	$cb		The callback to execute
- * @throws	InvalidArgumentException	If the method already is registered
- * @return	void
+ * @param	Model $model The model being acted on
+ * @param string $method The method na,e
+ * @param Callable $cb The callback to execute
+ * @throws InvalidArgumentException If the method already is registered
+ * @return void
  */
 	public function addMethod(Model $model, $method, Callable $cb) {
 		if ($this->_hasMethod($model, $method)) {
@@ -111,9 +111,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Handles user defined method calls, which are implemented using closures.
  *
- * @param	Model	$model	The model being acted on
- * @param	string	$method	The method name
- * @return	mixed			The return value of the callback, or an array if the method doesn't exist
+ * @param Model $model The model being acted on
+ * @param string $method The method name
+ * @return mixed The return value of the callback, or an array if the method doesn't exist
  */
 	public function handleMethodCall(Model $model, $method) {
 		if (! isset($this->settings[$model->alias]['methods'][$method])) {
@@ -125,10 +125,10 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Updates the model's state when a $model->save() call is performed
  * 
- * @param	Model	$model		The model being acted on
- * @param	boolean $created	Whether or not the model was created
- * @param	array	$options	Options passed to save
- * @return	boolean
+ * @param Model	$model		The model being acted on
+ * @param boolean $created	Whether or not the model was created
+ * @param array	$options	Options passed to save
+ * @return boolean
  */
 	public function afterSave(Model $model, $created, $options = array()) {
 		if ($created) {
@@ -142,7 +142,7 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * returns all transitions defined in model 
  * 
- * @param  Model $model  The model being acted on
+ * @param Model $model  The model being acted on
  * @return array array of transitions
  * @author Frode Marton Meling
  */
@@ -166,7 +166,7 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * checks if $state or Array of states are valid ones
  * 
- * @param  string/array $state a string representation of state or a array of states
+ * @param string/array $state a string representation of state or a array of states
  * @return boolean
  * @author Frode Marton Meling
  */
@@ -187,10 +187,10 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
  * 
- * @param  Model        $model    The model being acted on
- * @param  string       $type     find type (ref. CakeModel)
- * @param  array/string $state    The state to find. this will be checked for validity.
- * @param  array        $params   Regular $params array for CakeModel->find
+ * @param Model        $model    The model being acted on
+ * @param string       $type     find type (ref. CakeModel)
+ * @param array/string $state    The state to find. this will be checked for validity.
+ * @param array        $params   Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
@@ -208,9 +208,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * This function will add all availble (runnable) transitions on a model and add it to the dataArray given to the function.
  * 
- * @param  Model        $model        The model being acted on
- * @param  array        $modelRows    The model dataArray. this is an array of Models returned from a model->find.
- * @param  string       $role         if specified, the function will limit the transitions based on a role
+ * @param Model        $model        The model being acted on
+ * @param array        $modelRows    The model dataArray. this is an array of Models returned from a model->find.
+ * @param string       $role         if specified, the function will limit the transitions based on a role
  * @return array        Returns datarray of $model with the available transitions inserted
  * @author Frode Marton Meling
  */
@@ -236,37 +236,37 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
  * 
- * @param  Model        $model    The model being acted on
- * @param  array/string $state    The state to find. this will be checked for validity.
- * @param  array        $params   Regular $params array for CakeModel->find
+ * @param Model        $model    The model being acted on
+ * @param array/string $state    The state to find. this will be checked for validity.
+ * @param array        $params   Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
 	public function findAllByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
 		$modelRows = $this->_findByState($model, 'all', $state, $params);
-		return ($withTransitions)? $this->_addTransitionsToArray($model, $modelRows, $role) : $modelRows;
+		return ($withTransitions) ? $this->_addTransitionsToArray($model, $modelRows, $role) : $modelRows;
 	}
 
 /**
  * Finds first record in a specific state. Supports additional conditions, but will overwrite conditions with state
  * 
- * @param  Model  $model    The model being acted on
- * @param  array/string $state    The state to find. this will be checked for validity.
- * @param  array  $params   Regular $params array for CakeModel->find
+ * @param Model  $model    The model being acted on
+ * @param array/string $state    The state to find. this will be checked for validity.
+ * @param array  $params   Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
 	public function findFirstByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
 		$modelRow = $this->_findByState($model, 'first', $state, $params);
-		return ($withTransitions)? $this->_addTransitionsToArray($model, ($modelRow)? array($modelRow) : false, $role) : $modelRow;
+		return ($withTransitions) ? $this->_addTransitionsToArray($model, ($modelRow) ? array($modelRow) : false, $role) : $modelRow;
 	}
 
 /**
  * Finds count of records in a specific state. Supports additional conditions, but will overwrite conditions with state
  * 
- * @param  Model  $model    The model being acted on
- * @param  array/string $state    The state to find. this will be checked for validity.
- * @param  array  $params   Regular $params array for CakeModel->find
+ * @param Model  $model    The model being acted on
+ * @param array/string $state    The state to find. this will be checked for validity.
+ * @param array  $params   Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
@@ -375,11 +375,11 @@ class StateMachineBehavior extends ModelBehavior {
  * Registers a callback function to be called when the machine leaves one state.
  * The callback is fired either before or after the given transition.
  *
- * @param	Model	$model			The model being acted on
- * @param	string	$transition		The transition to listen to
- * @param	string	$triggerType	Either before or after
- * @param	Callable	$cb				The callback function that will be called
- * @param	Boolean	$bubble			Whether or not to bubble other listeners
+ * @param Model $model The model being acted on
+ * @param string $transition The transition to listen to
+ * @param string $triggerType Either before or after
+ * @param Callable $cb The callback function that will be called
+ * @param Boolean $bubble Whether or not to bubble other listeners
  */
 	public function on(Model $model, $transition, $triggerType, Callable $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
@@ -392,9 +392,9 @@ class StateMachineBehavior extends ModelBehavior {
  * Registers a callback that will be called when the state machine enters the given
  * state.
  *
- * @param	Model	$model	The model being acted on
- * @param	string	$state	The state which the machine should enter
- * @param	Callable	$cb		The callback function that will be called
+ * @param Model $model The model being acted on
+ * @param string $state The state which the machine should enter
+ * @param Callable $cb The callback function that will be called
  */
 	public function when(Model $model, $state, Callable $cb) {
 		$this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
@@ -403,9 +403,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the states the machine would be in, after the given transition
  *
- * @param	Model	$model		The model being acted on
- * @param	string	$transition	The transition name
- * @return	mixed				False if the transition doesnt yield any states, or an array of states
+ * @param Model $model The model being acted on
+ * @param string $transition The transition name
+ * @return mixed False if the transition doesnt yield any states, or an array of states
  */
 	public function getStates(Model $model, $transition) {
 		if (! isset($model->transitions[$transition])) {
@@ -431,9 +431,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the current state of the machine givend its id
  * 
- * @param	Model	$model	The model being acted on
- * @param	integer	$id	The id of the item to check
- * @return	string			The current state of the machine
+ * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
+ * @return string The current state of the machine
  */
 	public function getCurrentStateById(Model $model, $id) {
 		$modelRow = $model->findById($id);
@@ -447,19 +447,19 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the current state of the machine
  * 
- * @param	Model	$model	The model being acted on
- * @return	string			The current state of the machine
+ * @param Model $model The model being acted on
+ * @return string The current state of the machine
  */
 	public function getCurrentState(Model $model) {
-		return (($model->field('state') != null))? $model->field('state') : $model->initialState;
+		return (($model->field('state') != null)) ? $model->field('state') : $model->initialState;
 	}
 
 /**
  * Returns the current state of the machine givend its id
  * 
- * @param	Model	$model	The model being acted on
- * @param	integer	$id	The id of the item to check
- * @return	string			The current state of the machine
+ * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
+ * @return string The current state of the machine
  */
 	public function getPreviousStateById(Model $model, $id) {
 		$modelRow = $model->findById($id);
@@ -473,8 +473,8 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the previous state of the machine
  * 
- * @param	Model	$model	The model being acted on
- * @return	string			The previous state of the machine
+ * @param Model $model The model being acted on
+ * @return string The previous state of the machine
  */
 	public function getPreviousState(Model $model) {
 		return $model->field('previous_state');
@@ -483,9 +483,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the last transition ran of the machine givend its id
  * 
- * @param	Model	$model	The model being acted on
- * @param	integer	$id	The id of the item to check
- * @return	string			The current state of the machine
+ * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
+ * @return string The current state of the machine
  */
 	public function getLastTransitionById(Model $model, $id) {
 		$modelRow = $model->findById($id);
@@ -499,8 +499,8 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the last transition ran
  * 
- * @param	Model	$model	The model being acted on
- * @return	string			The transition last ran of the machine
+ * @param Model $model The model being acted on
+ * @return string The transition last ran of the machine
  */
 	public function getLastTransition(Model $model) {
 		return $model->field('last_transition');
@@ -509,9 +509,9 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the role that ran last transition of the machine givend its id
  * 
- * @param	Model	$model	The model being acted on
- * @param	integer	$id	The id of the item to check
- * @return	string			The current state of the machine
+ * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
+ * @return string The current state of the machine
  */
 	public function getLastRoleById(Model $model, $id) {
 		$modelRow = $model->findById($id);
@@ -525,8 +525,8 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * Returns the role that ran the last transition
  * 
- * @param	Model	$model	The model being acted on
- * @return	string			The role that last ran a transition of the machine
+ * @param Model $model The model being acted on
+ * @return string The role that last ran a transition of the machine
  */
 	public function getLastRole(Model $model) {
 		return $model->field('last_role');
@@ -540,8 +540,8 @@ class StateMachineBehavior extends ModelBehavior {
  * }}}
  * Assuming that the contents are written to the file fsm.gv
  *
- * @param	Model	$model	The model being acted on
- * @return	string			The contents of the graphviz file
+ * @param Model $model The model being acted on
+ * @return string The contents of the graphviz file
  */
 	public function toDot(Model $model) {
 		$digraph = <<<EOT
@@ -565,11 +565,11 @@ EOT;
  * This method prepares an array for each transition in the statemachine making it easier to iterate throug the machine for
  * output to various formats
  *
- * @param	Model	$model		 The model being acted on
- * @param	array	$roles		 The role(s) executing the transition change. with an options array.
+ * @param Model $model  The model being acted on
+ * @param array $roles  The role(s) executing the transition change. with an options array.
  *                               'role' => array('color' => color of the arrows)
  *                               In the future many more Graphviz options can be added
- * @return	array			     returns an array of all transitions
+ * @return array      returns an array of all transitions
  * @author  Frode Marton Meling <fm@saltship.com>
  */
 	public function prepareForDotWithRoles(Model $model, $roles) {
@@ -613,15 +613,15 @@ EOT;
  * }}}
  * Assuming that the contents are written to the file fsm.gv
  *
- * @param	Model	$model		 The model being acted on
- * @param	array	$role		 The role(s) executing the transition change. with an options array.
+ * @param Model $model The model being acted on
+ * @param array $role The role(s) executing the transition change. with an options array.
  *                               'role' => array('color' => color of the arrows)
  *                               In the future many more Graphviz options can be added
- * @param  array    $dotOptions Options for nodes
+ * @param array $dotOptions Options for nodes
  * 								 'color' => 'color of all nodes'
  * 								 'activeColor' => 'the color you want the active node to have'
- * @return	string			The contents of the graphviz file
- * @author  Frode Marton Meling <fm@saltship.com>
+ * @return string The contents of the graphviz file
+ * @author Frode Marton Meling <fm@saltship.com>
  */
 	public function createDotFileForRoles(Model $model, $roles, $dotOptions) {
 		//$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
@@ -638,9 +638,9 @@ EOT;
 				Inflector::humanize($transition['stateFrom']),
 				Inflector::humanize($transition['stateTo']),
 				Inflector::humanize($transition['transition']),
-				(isset($transition['roles']) && (!$this->_containsAllRoles($transition['roles'], $roles) || (count($roles) == 1)))? 'by (' . Inflector::humanize(implode(' or ', $transition['roles'])) . ')' : 'by All',
-				(isset($transition['depends']))? "\nif " . Inflector::humanize($transition['depends']) : '',
-				(isset($transition['roles']) && count($transition['roles']) == 1)? "color = \"" . $roles[$transition['roles'][0]]['color'] . "\"" : ''//,
+				(isset($transition['roles']) && (!$this->_containsAllRoles($transition['roles'], $roles) || (count($roles) == 1))) ? 'by (' . Inflector::humanize(implode(' or ', $transition['roles'])) . ')' : 'by All',
+				(isset($transition['depends'])) ? "\nif " . Inflector::humanize($transition['depends']) : '',
+				(isset($transition['roles']) && count($transition['roles']) == 1) ? "color = \"" . $roles[$transition['roles'][0]]['color'] . "\"" : ''//,
 				//'when' . Inflector::camelize($transition['stateTo']),
 				//'on' . Inflector::camelize($transition['stateFrom'])
 			);
@@ -653,11 +653,11 @@ EOT;
  * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
  * 
- * @param	Model	$model		 The model being acted on
- * @param  Array $roles      This is just an array of roles like array('role1', 'role2'...)
- * @return Array             Returns an array of roles like array('role1', 'role2'...)
+ * @param Model	$model The model being acted on
+ * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
+ * @return Array Returns an array of roles like array('role1', 'role2'...)
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	public function getAllRoles(Model $model, $roles) {
 		$arrayToReturn = array();
@@ -670,12 +670,11 @@ EOT;
 /**
  * This function is used to add transitions to Array. This tests for conditions and makes sure duplicates are not added.
  * 
- * @param  Model	$model		   The model being acted on
- * @param  array $data          An array of a transition to be added
- * @param  array $prepareArray  The current array to populate
+ * @param Model $model The model being acted on
+ * @param array $data An array of a transition to be added
+ * @param array $prepareArray The current array to populate
  * @author Frode Marton Meling <fm@saltship.com>
- *
- * @todo - Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing
+ * @todo Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing
  */
 	public function addToPrepareArray(Model $model, $data, $prepareArray) {
 		if (!is_array($data)) {
@@ -712,11 +711,11 @@ EOT;
  * This helperfunction checks if all roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
  * 
- * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
- * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
- * @return boolean             Returns true if all roles are present, otherwise false
+ * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
+ * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+ * @return boolean Returns true if all roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _containsAllRoles($roles, $allRoles) {
 		foreach ($allRoles as $role => $options) {
@@ -731,11 +730,11 @@ EOT;
  * This helperfunction checks if any of the roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
  * I did not find a php method for this, so made it myself
  * 
- * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
- * @param  Array $allRoles     This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
- * @return boolean             Returns true if just one of the roles are present, otherwise false
+ * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
+ * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+ * @return boolean Returns true if just one of the roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _containsAnyRoles($roles, $allRoles) {
 		$atleastOne = false;
@@ -751,11 +750,11 @@ EOT;
  * This helperfunction adds a role to an array. It checks for duplicates and only adds if it is not already in array
  * If also checks that the resultArray is valid and that there are roles there to begin with
  * 
- * @param  Array $roles        This is just an array of roles like array('role1', 'role2'...)
- * @param  Array &$resultArray This function writes to this parameter by reference
- * @return boolean             Returns true if added, otherwise false
+ * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
+ * @param Array &$resultArray This function writes to this parameter by reference
+ * @return boolean Returns true if added, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _addRoles($roles, &$resultArray) {
 		$addedAtleastOne = false;
@@ -771,10 +770,10 @@ EOT;
 /**
  * This helperfunction checks if state and transition is present in the array
  * 
- * @param  array $data  The array to check
- * @return boolean       true if array is valid, otherwise false
+ * @param array $data The array to check
+ * @return boolean true if array is valid, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _stateAndTransitionExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition'])) {
@@ -786,10 +785,10 @@ EOT;
 /**
  * This helperfunction checks if state, transition and depends exist in array
  * 
- * @param  array $data  The array to check
- * @return boolean      True if state, transition and depends exist in array, otherwise false
+ * @param array $data The array to check
+ * @return boolean True if state, transition and depends exist in array, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _stateTransitionAndDependsExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition']) && isset($data['depends'])) {
@@ -801,11 +800,11 @@ EOT;
 /**
  * This helperfunction checks if state and transition is present in prepareArray. this is used to prevent adding duplicates
  * 
- * @param  array $data         The array for testing
- * @param  array $prepareArray The array to check against
- * @return boolean             index in array if state and transition is present in prepareArray, otherwise false
+ * @param array $data The array for testing
+ * @param array $prepareArray The array to check against
+ * @return boolean index in array if state and transition is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _stateAndTransitionInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
@@ -819,11 +818,11 @@ EOT;
 /**
  * This helperfunction checks if state, transition and depends is present in prepareArray. this is used to prevent adding duplicates
  * 
- * @param  array $data         The array for testing
- * @param  array $prepareArray The array to check against
- * @return boolean             the index in array if state, transition and depends is present in prepareArray, otherwise false
+ * @param array $data The array for testing
+ * @param array $prepareArray The array to check against
+ * @return boolean the index in array if state, transition and depends is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests
+ * @todo Add separate tests
  */
 	protected function _stateTransitionAndDependsInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
@@ -841,11 +840,11 @@ EOT;
  * Checks whether or not the given role may perform the transition change.
  * The callback in 'depends' must be a valid model method.
  *
- * @param	Model	$model		The model being acted on
- * @param	string	$role		The role executing the transition change
- * @param	string	$transition	The transition
- * @throws	InvalidArgumentException	if the transition require it be executed by a rule, and none is given
- * @return	boolean				Whether or not the role may perform the action
+ * @param Model $model The model being acted on
+ * @param string $role The role executing the transition change
+ * @param string $transition The transition
+ * @throws InvalidArgumentException if the transition require it be executed by a rule, and none is given
+ * @return boolean Whether or not the role may perform the action
  */
 	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
 		if (! isset($model->transitionRules[$transition])) {
@@ -885,8 +884,8 @@ EOT;
  * - onBefore<Transition>	i.e. onBeforePark()
  * - onAfter<Transition>	i.e. onAfterPark()
  *
- * @param	string	$transition		The transition name
- * @param	string	$triggerType	Either before or after
+ * @param string $transition The transition name
+ * @param string $trigger Type Either before or after
  */
 	protected function _callTransitionListeners(Model $model, $transition, $triggerType = 'after') {
 		$transitionListeners = &$this->settings[$model->alias]['transition_listeners'];
@@ -924,8 +923,8 @@ EOT;
  * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
  * the remaining text.
  *
- * @param	string	$name	The model name
- * @return	string			The deformalized method name
+ * @param string $name The model name
+ * @return string The deformalized method name
  */
 	protected function _deFormalizeMethodName($name) {
 		return Inflector::underscore(preg_replace('#^(can|is)#', '', $name));
@@ -935,8 +934,8 @@ EOT;
  * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
  * the remaining text.
  *
- * @param	string	$name	The model name
- * @return	string			The deformalized method name
+ * @param string $name The model name
+ * @return string The deformalized method name
  */
 	protected function _deFormalizeById($name) {
 		return Inflector::underscore(preg_replace('#By[a-zA-Z]+$#', '', $name));
@@ -945,9 +944,9 @@ EOT;
 /**
  * Checks whether or not a user-defined method exists in the Behavior
  *
- * @param	Model	$model	The model being acted on
- * @param	string	$method	The method's name
- * @return	boolean			True if the method exists, false otherwise
+ * @param Model $model The model being acted on
+ * @param string $method The method's name
+ * @return boolean True if the method exists, false otherwise
  */
 	protected function _hasMethod(Model $model, $method) {
 		return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
