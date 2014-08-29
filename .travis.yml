@@ -18,7 +18,6 @@ before_install:
 
 install:
   - composer install --dev --prefer-source
-  - ./vendor/bin/phpcs --config-set installed_paths vendor/cakephp/cakephp-codesniffer
   - git clone git://github.com/cakephp/cakephp ../cakephp && cd ../cakephp && git checkout $CAKE_VERSION
   - cp -R ../$REPO_NAME  ../cakephp/app/Plugin/$PLUGIN_NAME
   - chmod -R 770 ../cakephp/app/tmp
@@ -52,6 +51,7 @@ before_script:
     }" > ../cakephp/app/Config/database.php
 script:
   - mkdir -p ../cakephp/app/build/logs
+  - cd ../cakephp/app && ./Plugin/$PLUGIN_NAME/vendor/bin/phpcs --config-set installed_paths Plugin/$PLUGIN_NAME/vendor/cakephp/cakephp-codesniffer
   - cd ../cakephp/app && ./Plugin/StateMachine/vendor/bin/phpcs --standard=CakePHP --ignore=*/vendor/* Plugin/$PLUGIN_NAME
   - cd ../cakephp/app/ && ./Console/cake test $PLUGIN_NAME StateMachine/Model/Behavior/StateMachineBehavior --stderr --coverage-clover build/logs/clover.xml
 
