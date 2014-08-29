@@ -16,7 +16,8 @@
         "composer/installers": "*"
     },
 	"require-dev": {
-		"satooshi/php-coveralls": "dev-master"
+		"satooshi/php-coveralls": "dev-master",
+        "cakephp/cakephp-codesniffer": ">=0.1"
 	},
     "extra": {
         "installer-name": "StateMachine"
