@@ -301,8 +301,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param string $role The rule executing the transition
  * @param string $transition The transition being initiated
+ * @param bool $validate whether or not validation being checked
  */
-	public function transition(Model $model, $transition, $role = null) {
+	public function transition(Model $model, $transition, $role = null, $validate = true) {
 		$transition = Inflector::underscore($transition);
 		$state = $this->getStates($model, $transition);
 		if (! $state || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
@@ -316,7 +317,7 @@ class StateMachineBehavior extends ModelBehavior {
 		$model->set('last_transition', $transition);
 		$model->set('last_role', $role);
 		$model->set('state', $state);
-		$retval = $model->save();
+		$retval = $model->save(null, $validate);
 
 		$this->_callTransitionListeners($model, $transition, 'after');
 

@@ -149,6 +149,12 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("first_gear", $this->Vehicle->getPreviousStateById(1));
 	}
 
+	public function testIgnoreValidationOnStateChange() {
+		$this->Vehicle->validator()->add('title', 'custom', array(function() { return false; }));
+		$this->assertTrue($this->Vehicle->ignite(null, false));
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+	}
+
 	public function testFindAllByState() {
 		$this->assertFalse($this->Vehicle->findAllByState());
 		$this->assertFalse($this->Vehicle->findAllByState('illegal_state_should_not_be_possible'));
