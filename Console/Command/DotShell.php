@@ -43,11 +43,23 @@ class DotShell extends Shell {
 				$this->Model = new $this->args[0](1);
 
 				// generate all roles
-				$dot = $this->Model->createDotFileForRoles($this->Model->roles, array(
+			/*	$dot = $this->Model->createDotFileForRoles($this->Model->roles, array(
 					'color' => 'lightgrey',
 					'activeColor' => 'green'
 					));
 				$this->_generatePng($dot, TMP . $this->args[2]);
+*/
+				$rolesForPopping = $this->Model->roles;
+				$timesToPop = count($rolesForPopping);
+				do {
+					$dot = $this->Model->createDotFileForRoles($rolesForPopping, array(
+						'color' => 'lightgrey',
+						'activeColor' => 'green'
+						));
+					$this->_generatePng($dot, TMP . implode('_', $this->Model->getAllRoles($rolesForPopping)) . '_' . $this->args[2]);
+					array_pop($rolesForPopping);
+					$timesToPop--;
+				} while ($timesToPop > 0);
 
 				foreach ($this->Model->roles as $role => $options) {
 					$dot = $this->Model->createDotFileForRoles(array($role => $this->Model->roles[$role]), array(
