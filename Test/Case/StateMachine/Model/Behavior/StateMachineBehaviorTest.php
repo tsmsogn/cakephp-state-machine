@@ -149,6 +149,23 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("first_gear", $this->Vehicle->getPreviousStateById(1));
 	}
 
+	public function testCanTransitionById() {
+		$this->assertTrue($this->Vehicle->is('parked'));
+
+		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
+		$this->assertFalse($this->Vehicle->canTransitionById('shift_up', 1));
+
+		$this->assertTrue($this->Vehicle->canTransitionById('ignite', 1));
+		$this->Vehicle->ignite();
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+
+		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
+		$this->assertTrue($this->Vehicle->canShiftUpById(1));
+		$this->assertFalse($this->Vehicle->canShiftDownById(1));
+
+		$this->assertFalse($this->Vehicle->canShiftUpById(2));
+	}
+
 	public function testFindAllByState() {
 		$this->assertFalse($this->Vehicle->findAllByState());
 		$this->assertFalse($this->Vehicle->findAllByState('illegal_state_should_not_be_possible'));
@@ -622,6 +639,26 @@ EOT;
 
 		$this->assertFalse($this->Vehicle->canPark('driver'));
 		$this->assertTrue($this->Vehicle->canPark('thief'));
+	}
+
+	public function testRulesWithCanTransitionById() {
+		$this->Vehicle = new RulesVehicle(1);
+
+		$this->assertTrue($this->Vehicle->canIgniteById(1, 'driver'));
+		$this->assertFalse($this->Vehicle->canIgniteById(1, 'thief'));
+		$this->assertTrue($this->Vehicle->canHardwireById(1, 'thief'));
+		$this->assertFalse($this->Vehicle->canHardwireById(1, 'driver'));
+
+		$this->Vehicle->ignite('driver');
+
+		$this->Vehicle->igniteById(1, 'driver');
+		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
+		$this->assertEquals("driver", $this->Vehicle->getLastRoleById(1));
+
+		$this->assertFalse($this->Vehicle->canParkById(1, 'driver'));
+		$this->assertTrue($this->Vehicle->canParkById(1, 'thief'));
 	}
 
 	public function testRuleWithCallback() {

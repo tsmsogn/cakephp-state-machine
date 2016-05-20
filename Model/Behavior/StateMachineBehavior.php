@@ -75,7 +75,8 @@ class StateMachineBehavior extends ModelBehavior {
 				}
 			}
 
-			$this->mapMethods['/can' . Inflector::camelize($transition) . '/'] = 'can';
+			$this->mapMethods['/^can' . Inflector::camelize($transition) . 'ById' . '$/'] = 'canTransitionById';
+			$this->mapMethods['/^can' . Inflector::camelize($transition) . '$/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
 			$this->mapMethods['/^' . $transitionFunction . 'ById' . '$/'] = 'transitionById';
@@ -351,6 +352,25 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function is(Model $model, $state) {
 		return $this->getCurrentState($model) === $this->_deFormalizeMethodName($state);
+	}
+
+/**
+ * Checks whether or not the machine is able to perform transition givend its id
+ *
+ * @param Model $model The model being acted on
+ * @param string $transition The transition being checked
+ * @param integer $id The id of the item to check
+ * @param string $role The role which should execute the transition
+ * @return boolean whether or not the machine can perform the transition
+ * @throws BadMethodCallException when method does not exists
+ */
+	public function canTransitionById(Model $model, $transition, $id, $role = null) {
+		$transition = $this->_deFormalizeMethodNameById($transition);
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->can($model, $transition, $role);
+		}
 	}
 
 /**
@@ -939,6 +959,17 @@ EOT;
  */
 	protected function _deFormalizeById($name) {
 		return Inflector::underscore(preg_replace('#By[a-zA-Z]+$#', '', $name));
+	}
+
+/**
+ * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
+ * the remaining text.
+ *
+ * @param string $name The model name
+ * @return string The deformalized method name
+ */
+	protected function _deFormalizeMethodNameById($name) {
+		return Inflector::underscore(preg_replace('#^can(.+)ById$#', '$1', $name));
 	}
 
 /**
