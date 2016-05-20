@@ -240,16 +240,17 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testOnMethods() {
-		$this->Vehicle->onIgnite('before', function($currentState, $previousState, $transition) {
-			$this->assertEquals("parked", $currentState);
-			$this->assertNull($previousState);
-			$this->assertEquals("ignite", $transition);
+		$scope = $this;
+		$this->Vehicle->onIgnite('before', function($currentState, $previousState, $transition) use ($scope) {
+			$scope->assertEquals("parked", $currentState);
+			$scope->assertNull($previousState);
+			$scope->assertEquals("ignite", $transition);
 		});
 
-		$this->Vehicle->on('ignite', 'after', function($currentState, $previousState, $transition) {
-			$this->assertEquals("idling", $currentState);
-			$this->assertEquals("parked", $previousState);
-			$this->assertEquals("ignite", $transition);
+		$this->Vehicle->on('ignite', 'after', function($currentState, $previousState, $transition) use ($scope) {
+			$scope->assertEquals("idling", $currentState);
+			$scope->assertEquals("parked", $previousState);
+			$scope->assertEquals("ignite", $transition);
 		});
 
 		$this->Vehicle->ignite();
@@ -278,13 +279,14 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testBubble() {
-		$this->Vehicle->on('ignite', 'before', function() {
-			$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+		$scope = $this;
+		$this->Vehicle->on('ignite', 'before', function() use ($scope) {
+			$scope->assertEquals("parked", $scope->Vehicle->getCurrentState());
 		}, false);
 
-		$this->Vehicle->on('transition', 'before', function() {
+		$this->Vehicle->on('transition', 'before', function() use ($scope) {
 			// this should never be called
-			$this->assertTrue(false);
+			$scope->assertTrue(false);
 		});
 
 		$this->Vehicle->ignite();

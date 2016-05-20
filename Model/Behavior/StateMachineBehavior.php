@@ -92,11 +92,11 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param	Model $model The model being acted on
  * @param string $method The method na,e
- * @param Callable $cb The callback to execute
+ * @param string $cb The callback to execute
  * @throws InvalidArgumentException If the method already is registered
  * @return void
  */
-	public function addMethod(Model $model, $method, Callable $cb) {
+	public function addMethod(Model $model, $method, $cb) {
 		if ($this->_hasMethod($model, $method)) {
 			throw new InvalidArgumentException("A method with the same name is already registered");
 		}
@@ -335,7 +335,7 @@ class StateMachineBehavior extends ModelBehavior {
 		}
 
 		foreach ($stateListeners as $cb) {
-			$cb($state);
+			call_user_func($cb, $state);
 		}
 
 		return (bool)$retval;
@@ -378,10 +378,10 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param string $transition The transition to listen to
  * @param string $triggerType Either before or after
- * @param Callable $cb The callback function that will be called
+ * @param string $cb The callback function that will be called
  * @param Boolean $bubble Whether or not to bubble other listeners
  */
-	public function on(Model $model, $transition, $triggerType, Callable $cb, $bubble = true) {
+	public function on(Model $model, $transition, $triggerType, $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
 			'cb' => $cb,
 			'bubble' => $bubble
@@ -394,9 +394,9 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $state The state which the machine should enter
- * @param Callable $cb The callback function that will be called
+ * @param string $cb The callback function that will be called
  */
-	public function when(Model $model, $state, Callable $cb) {
+	public function when(Model $model, $state, $cb) {
 		$this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
 	}
 
@@ -911,7 +911,7 @@ EOT;
 		$previousState = $this->getPreviousState($model);
 
 		foreach ($listeners as $cb) {
-			$cb['cb']($currentState, $previousState, $transition);
+			call_user_func_array($cb['cb'], array($currentState, $previousState, $transition));
 
 			if (! $cb['bubble']) {
 				break;
