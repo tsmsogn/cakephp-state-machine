@@ -155,6 +155,23 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
 	}
 
+	public function testCanTransitionById() {
+		$this->assertTrue($this->Vehicle->is('parked'));
+
+		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
+		$this->assertFalse($this->Vehicle->canTransitionById('shift_up', 1));
+
+		$this->assertTrue($this->Vehicle->canTransitionById('ignite', 1));
+		$this->Vehicle->ignite();
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+
+		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
+		$this->assertTrue($this->Vehicle->canShiftUpById(1));
+		$this->assertFalse($this->Vehicle->canShiftDownById(1));
+
+		$this->assertFalse($this->Vehicle->canShiftUpById(2));
+	}
+
 	public function testFindAllByState() {
 		$this->assertFalse($this->Vehicle->findAllByState());
 		$this->assertFalse($this->Vehicle->findAllByState('illegal_state_should_not_be_possible'));
@@ -246,16 +263,17 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testOnMethods() {
-		$this->Vehicle->onIgnite('before', function($currentState, $previousState, $transition) {
-			$this->assertEquals("parked", $currentState);
-			$this->assertNull($previousState);
-			$this->assertEquals("ignite", $transition);
+		$scope = $this;
+		$this->Vehicle->onIgnite('before', function($currentState, $previousState, $transition) use ($scope) {
+			$scope->assertEquals("parked", $currentState);
+			$scope->assertNull($previousState);
+			$scope->assertEquals("ignite", $transition);
 		});
 
-		$this->Vehicle->on('ignite', 'after', function($currentState, $previousState, $transition) {
-			$this->assertEquals("idling", $currentState);
-			$this->assertEquals("parked", $previousState);
-			$this->assertEquals("ignite", $transition);
+		$this->Vehicle->on('ignite', 'after', function($currentState, $previousState, $transition) use ($scope) {
+			$scope->assertEquals("idling", $currentState);
+			$scope->assertEquals("parked", $previousState);
+			$scope->assertEquals("ignite", $transition);
 		});
 
 		$this->Vehicle->ignite();
@@ -284,13 +302,14 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testBubble() {
-		$this->Vehicle->on('ignite', 'before', function() {
-			$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+		$scope = $this;
+		$this->Vehicle->on('ignite', 'before', function() use ($scope) {
+			$scope->assertEquals("parked", $scope->Vehicle->getCurrentState());
 		}, false);
 
-		$this->Vehicle->on('transition', 'before', function() {
+		$this->Vehicle->on('transition', 'before', function() use ($scope) {
 			// this should never be called
-			$this->assertTrue(false);
+			$scope->assertTrue(false);
 		});
 
 		$this->Vehicle->ignite();
@@ -628,6 +647,26 @@ EOT;
 
 		$this->assertFalse($this->Vehicle->canPark('driver'));
 		$this->assertTrue($this->Vehicle->canPark('thief'));
+	}
+
+	public function testRulesWithCanTransitionById() {
+		$this->Vehicle = new RulesVehicle(1);
+
+		$this->assertTrue($this->Vehicle->canIgniteById(1, 'driver'));
+		$this->assertFalse($this->Vehicle->canIgniteById(1, 'thief'));
+		$this->assertTrue($this->Vehicle->canHardwireById(1, 'thief'));
+		$this->assertFalse($this->Vehicle->canHardwireById(1, 'driver'));
+
+		$this->Vehicle->ignite('driver');
+
+		$this->Vehicle->igniteById(1, 'driver');
+		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
+		$this->assertEquals("driver", $this->Vehicle->getLastRoleById(1));
+
+		$this->assertFalse($this->Vehicle->canParkById(1, 'driver'));
+		$this->assertTrue($this->Vehicle->canParkById(1, 'thief'));
 	}
 
 	public function testRuleWithCallback() {

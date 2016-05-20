@@ -75,7 +75,8 @@ class StateMachineBehavior extends ModelBehavior {
 				}
 			}
 
-			$this->mapMethods['/can' . Inflector::camelize($transition) . '/'] = 'can';
+			$this->mapMethods['/^can' . Inflector::camelize($transition) . 'ById' . '$/'] = 'canTransitionById';
+			$this->mapMethods['/^can' . Inflector::camelize($transition) . '$/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
 			$this->mapMethods['/^' . $transitionFunction . 'ById' . '$/'] = 'transitionById';
@@ -92,11 +93,11 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param	Model $model The model being acted on
  * @param string $method The method na,e
- * @param Callable $cb The callback to execute
+ * @param string $cb The callback to execute
  * @throws InvalidArgumentException If the method already is registered
  * @return void
  */
-	public function addMethod(Model $model, $method, Callable $cb) {
+	public function addMethod(Model $model, $method, $cb) {
 		if ($this->_hasMethod($model, $method)) {
 			throw new InvalidArgumentException("A method with the same name is already registered");
 		}
@@ -336,7 +337,7 @@ class StateMachineBehavior extends ModelBehavior {
 		}
 
 		foreach ($stateListeners as $cb) {
-			$cb($state);
+			call_user_func($cb, $state);
 		}
 
 		return (bool)$retval;
@@ -352,6 +353,25 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function is(Model $model, $state) {
 		return $this->getCurrentState($model) === $this->_deFormalizeMethodName($state);
+	}
+
+/**
+ * Checks whether or not the machine is able to perform transition givend its id
+ *
+ * @param Model $model The model being acted on
+ * @param string $transition The transition being checked
+ * @param integer $id The id of the item to check
+ * @param string $role The role which should execute the transition
+ * @return boolean whether or not the machine can perform the transition
+ * @throws BadMethodCallException when method does not exists
+ */
+	public function canTransitionById(Model $model, $transition, $id, $role = null) {
+		$transition = $this->_deFormalizeMethodNameById($transition);
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->can($model, $transition, $role);
+		}
 	}
 
 /**
@@ -379,10 +399,10 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param string $transition The transition to listen to
  * @param string $triggerType Either before or after
- * @param Callable $cb The callback function that will be called
+ * @param string $cb The callback function that will be called
  * @param Boolean $bubble Whether or not to bubble other listeners
  */
-	public function on(Model $model, $transition, $triggerType, Callable $cb, $bubble = true) {
+	public function on(Model $model, $transition, $triggerType, $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
 			'cb' => $cb,
 			'bubble' => $bubble
@@ -395,9 +415,9 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $state The state which the machine should enter
- * @param Callable $cb The callback function that will be called
+ * @param string $cb The callback function that will be called
  */
-	public function when(Model $model, $state, Callable $cb) {
+	public function when(Model $model, $state, $cb) {
 		$this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
 	}
 
@@ -912,7 +932,7 @@ EOT;
 		$previousState = $this->getPreviousState($model);
 
 		foreach ($listeners as $cb) {
-			$cb['cb']($currentState, $previousState, $transition);
+			call_user_func_array($cb['cb'], array($currentState, $previousState, $transition));
 
 			if (! $cb['bubble']) {
 				break;
@@ -940,6 +960,17 @@ EOT;
  */
 	protected function _deFormalizeById($name) {
 		return Inflector::underscore(preg_replace('#By[a-zA-Z]+$#', '', $name));
+	}
+
+/**
+ * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
+ * the remaining text.
+ *
+ * @param string $name The model name
+ * @return string The deformalized method name
+ */
+	protected function _deFormalizeMethodNameById($name) {
+		return Inflector::underscore(preg_replace('#^can(.+)ById$#', '$1', $name));
 	}
 
 /**
