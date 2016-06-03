@@ -133,7 +133,6 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	public function afterSave(Model $model, $created, $options = array()) {
 		if ($created) {
-			$model->read();
 			$model->saveField('state', $model->initialState);
 		}
 
@@ -313,7 +312,6 @@ class StateMachineBehavior extends ModelBehavior {
 
 		$this->_callTransitionListeners($model, $transition, 'before');
 
-		$model->read(null, $model->id);
 		$model->set('previous_state', $model->getCurrentState());
 		$model->set('last_transition', $transition);
 		$model->set('last_role', $role);
