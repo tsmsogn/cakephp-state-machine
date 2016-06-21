@@ -312,6 +312,7 @@ class StateMachineBehavior extends ModelBehavior {
 
 		$this->_callTransitionListeners($model, $transition, 'before');
 
+		$model->read(null, $model->id);
 		$model->set('previous_state', $model->getCurrentState());
 		$model->set('last_transition', $transition);
 		$model->set('last_role', $role);
