@@ -110,6 +110,18 @@ class RulesVehicle extends BaseVehicle {
 
 }
 
+class ValidationsVehicle extends BaseVehicle {
+
+	public $validate = array(
+		'title' => array(
+			'custom' => array(
+				'rule' => array('custom', '/toyota yaris/i')
+			)
+		)
+	);
+
+}
+
 class StateMachineBehaviorTest extends CakeTestCase {
 
 	public $fixtures = array(
@@ -150,9 +162,21 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testIgnoreValidationOnStateChange() {
-		$this->Vehicle->validator()->add('title', 'custom', array(function() { return false; }));
+		$this->Vehicle = new ValidationsVehicle(1);
+
+		$this->assertFalse($this->Vehicle->ignite());
+		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+
 		$this->assertTrue($this->Vehicle->ignite(null, false));
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+	}
+
+	public function testValidateOnTransition() {
+		$this->Vehicle = new ValidationsVehicle(1);
+		$this->assertFalse($this->Vehicle->ignite());
+
+		$this->Vehicle = new ValidationsVehicle(2);
+		$this->assertTrue($this->Vehicle->ignite());
 	}
 
 	public function testCanTransitionById() {
