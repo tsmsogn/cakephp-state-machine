@@ -161,7 +161,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals("first_gear", $this->Vehicle->getPreviousStateById(1));
 	}
 
-	public function testIgnoreValidationOnStateChange() {
+	public function testIgnoreValidationOnTransition() {
 		$this->Vehicle = new ValidationsVehicle(1);
 
 		$this->assertFalse($this->Vehicle->ignite());
