@@ -110,7 +110,7 @@ class RulesVehicle extends BaseVehicle {
 
 }
 
-class ValidationsVehicle extends BaseVehicle {
+class ValidationsVehicle extends Vehicle {
 
 	public $validate = array(
 		'title' => array(
@@ -176,6 +176,28 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertFalse($this->Vehicle->ignite());
 
 		$this->Vehicle = new ValidationsVehicle(2);
+		$this->assertTrue($this->Vehicle->ignite());
+	}
+
+	public function testStateListener() {
+		// test state listener on transition failed
+		$this->Vehicle = $this->getMock('ValidationsVehicle', array(
+			'onStateChange', 'onStateIdling', 'onBeforeTransition', 'onAfterTransition'));
+		$this->Vehicle->id = 1;
+		$this->Vehicle->expects($this->once())->method('onBeforeTransition');
+		$this->Vehicle->expects($this->never())->method('onAfterTransition');
+		$this->Vehicle->expects($this->never())->method('onStateChange');
+		$this->Vehicle->expects($this->never())->method('onStateIdling');
+		$this->assertFalse($this->Vehicle->ignite());
+
+		// test state listener on transition success
+		$this->Vehicle = $this->getMock('ValidationsVehicle', array(
+			'onStateChange', 'onStateIdling', 'onBeforeTransition', 'onAfterTransition'));
+		$this->Vehicle->id = 2;
+		$this->Vehicle->expects($this->once())->method('onBeforeTransition');
+		$this->Vehicle->expects($this->once())->method('onAfterTransition');
+		$this->Vehicle->expects($this->once())->method('onStateChange');
+		$this->Vehicle->expects($this->once())->method('onStateIdling');
 		$this->assertTrue($this->Vehicle->ignite());
 	}
 
