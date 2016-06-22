@@ -319,24 +319,26 @@ class StateMachineBehavior extends ModelBehavior {
 		$model->set('state', $state);
 		$retval = $model->save(null, $validate);
 
-		$this->_callTransitionListeners($model, $transition, 'after');
+		if ($retval) {
+			$this->_callTransitionListeners($model, $transition, 'after');
 
-		$stateListeners = array();
-		if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
-			$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
-		}
-
-		foreach (array(
-			'onState' . Inflector::camelize($state),
-			'onStateChange'
-		) as $method) {
-			if (method_exists($model, $method)) {
-				$stateListeners[] = array($model, $method);
+			$stateListeners = array();
+			if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
+				$stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
 			}
-		}
 
-		foreach ($stateListeners as $cb) {
-			call_user_func($cb, $state);
+			foreach (array(
+				'onState' . Inflector::camelize($state),
+				'onStateChange'
+			) as $method) {
+				if (method_exists($model, $method)) {
+					$stateListeners[] = array($model, $method);
+				}
+			}
+
+			foreach ($stateListeners as $cb) {
+				call_user_func($cb, $state);
+			}
 		}
 
 		return (bool)$retval;
