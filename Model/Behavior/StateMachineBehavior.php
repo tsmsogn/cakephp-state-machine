@@ -70,7 +70,8 @@ class StateMachineBehavior extends ModelBehavior {
 					'is' . Inflector::camelize($stateTo)
 				) as $methodName) {
 					if (! $this->_hasMethod($model, $methodName)) {
-						$this->mapMethods['/' . $methodName . '/'] = 'is';
+						$this->mapMethods['/' . $methodName . 'ById' . '$/'] = 'isStateById';
+						$this->mapMethods['/' . $methodName . '$/'] = 'is';
 					}
 				}
 			}
@@ -342,6 +343,24 @@ class StateMachineBehavior extends ModelBehavior {
 		}
 
 		return (bool)$retval;
+	}
+
+/**
+ * Checks whether the state machine is in the given state its id
+ *
+ * @param Model $model The model being acted on
+ * @param string $state The state being checked
+ * @param integer $id The id of the item to check
+ * @return boolean whether or not the state machine is in the given state
+ * @throws BadMethodCallException when method does not exists
+ */
+	public function isStateById(Model $model, $state, $id) {
+		$state = $this->_deFormalizeMethodNameById($state);
+		$modelRow = $model->findById($id);
+		if ($modelRow) {
+			$model->id = $modelRow[$model->alias]['id'];
+			return $this->is($model, $state);
+		}
 	}
 
 /**
@@ -971,7 +990,7 @@ EOT;
  * @return string The deformalized method name
  */
 	protected function _deFormalizeMethodNameById($name) {
-		return Inflector::underscore(preg_replace('#^can(.+)ById$#', '$1', $name));
+		return Inflector::underscore(preg_replace('#^(can|is)(.+)ById$#', '$2', $name));
 	}
 
 /**

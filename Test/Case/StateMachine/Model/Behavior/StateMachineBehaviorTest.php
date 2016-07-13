@@ -282,6 +282,23 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals('parked', $this->Vehicle->getStates('turn_off'));
 	}
 
+	public function testIsStateByIdMethods() {
+		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
+		$this->assertEquals($this->Vehicle->isParkedById(1), $this->Vehicle->isStateById('parked', 1));
+		$this->assertTrue($this->Vehicle->isParkedById(1));
+
+		$this->Vehicle->ignite();
+
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
+		$this->assertEquals($this->Vehicle->isIdlingById(1), $this->Vehicle->isStateById('idling', 1));
+		$this->assertTrue($this->Vehicle->isIdlingById(1));
+
+		$this->assertEquals("parked", $this->Vehicle->getCurrentStateById(2));
+		$this->assertEquals($this->Vehicle->isParkedById(2), $this->Vehicle->isStateById('parked', 2));
+		$this->assertTrue($this->Vehicle->isParkedById(2));
+		$this->assertFalse($this->Vehicle->isIdlingById(2));
+	}
+
 	public function testIsMethods() {
 		$this->assertEquals($this->Vehicle->isParked(), $this->Vehicle->is('parked'));
 		$this->assertEquals($this->Vehicle->isIdling(), $this->Vehicle->is('idling'));
