@@ -148,17 +148,17 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testTransitionById() {
-		$this->Vehicle->igniteById(1);
-		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
-		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
-		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
-		$this->assertEquals("", $this->Vehicle->getLastRoleById(1));
-		$this->Vehicle->shiftUpById(1);
-		$this->assertEquals("first_gear", $this->Vehicle->getCurrentStateById(1));
-		$this->assertEquals("idling", $this->Vehicle->getPreviousStateById(1));
-		$this->Vehicle->shiftUpById(1);
-		$this->assertEquals("second_gear", $this->Vehicle->getCurrentStateById(1));
-		$this->assertEquals("first_gear", $this->Vehicle->getPreviousStateById(1));
+		$this->Vehicle->ignite(1);
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousState(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransition(1));
+		$this->assertEquals("", $this->Vehicle->getLastRole(1));
+		$this->Vehicle->shiftUp(1);
+		$this->assertEquals("first_gear", $this->Vehicle->getCurrentState(1));
+		$this->assertEquals("idling", $this->Vehicle->getPreviousState(1));
+		$this->Vehicle->shiftUp(1);
+		$this->assertEquals("second_gear", $this->Vehicle->getCurrentState(1));
+		$this->assertEquals("first_gear", $this->Vehicle->getPreviousState(1));
 	}
 
 	public function testIgnoreValidationOnTransition() {
@@ -167,7 +167,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertFalse($this->Vehicle->ignite());
 		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
 
-		$this->assertTrue($this->Vehicle->ignite(null, false));
+		$this->assertTrue($this->Vehicle->ignite(null, null, false));
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
 	}
 
@@ -204,18 +204,18 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	public function testCanTransitionById() {
 		$this->assertTrue($this->Vehicle->is('parked'));
 
-		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
-		$this->assertFalse($this->Vehicle->canTransitionById('shift_up', 1));
+		$this->assertEquals($this->Vehicle->can('shift_up', 1), $this->Vehicle->canShiftUp(1));
+		$this->assertFalse($this->Vehicle->can('shift_up', 1));
 
-		$this->assertTrue($this->Vehicle->canTransitionById('ignite', 1));
+		$this->assertTrue($this->Vehicle->can('ignite', 1));
 		$this->Vehicle->ignite();
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
 
-		$this->assertEquals($this->Vehicle->canTransitionById('shift_up', 1), $this->Vehicle->canShiftUpById(1));
-		$this->assertTrue($this->Vehicle->canShiftUpById(1));
-		$this->assertFalse($this->Vehicle->canShiftDownById(1));
+		$this->assertEquals($this->Vehicle->can('shift_up', 1), $this->Vehicle->canShiftUp(1));
+		$this->assertTrue($this->Vehicle->canShiftUp(1));
+		$this->assertFalse($this->Vehicle->canShiftDown(1));
 
-		$this->assertFalse($this->Vehicle->canShiftUpById(2));
+		$this->assertFalse($this->Vehicle->canShiftUp(2));
 	}
 
 	public function testFindAllByState() {
@@ -282,21 +282,21 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertEquals('parked', $this->Vehicle->getStates('turn_off'));
 	}
 
-	public function testIsStateByIdMethods() {
+	public function testIsMethodsById() {
 		$this->assertEquals("parked", $this->Vehicle->getCurrentState());
-		$this->assertEquals($this->Vehicle->isParkedById(1), $this->Vehicle->isStateById('parked', 1));
-		$this->assertTrue($this->Vehicle->isParkedById(1));
+		$this->assertEquals($this->Vehicle->isParked(1), $this->Vehicle->is('parked', 1));
+		$this->assertTrue($this->Vehicle->isParked(1));
 
 		$this->Vehicle->ignite();
 
 		$this->assertEquals("idling", $this->Vehicle->getCurrentState());
-		$this->assertEquals($this->Vehicle->isIdlingById(1), $this->Vehicle->isStateById('idling', 1));
-		$this->assertTrue($this->Vehicle->isIdlingById(1));
+		$this->assertEquals($this->Vehicle->isIdling(1), $this->Vehicle->is('idling', 1));
+		$this->assertTrue($this->Vehicle->isIdling(1));
 
-		$this->assertEquals("parked", $this->Vehicle->getCurrentStateById(2));
-		$this->assertEquals($this->Vehicle->isParkedById(2), $this->Vehicle->isStateById('parked', 2));
-		$this->assertTrue($this->Vehicle->isParkedById(2));
-		$this->assertFalse($this->Vehicle->isIdlingById(2));
+		$this->assertEquals("parked", $this->Vehicle->getCurrentState(2));
+		$this->assertEquals($this->Vehicle->isParked(2), $this->Vehicle->is('parked', 2));
+		$this->assertTrue($this->Vehicle->isParked(2));
+		$this->assertFalse($this->Vehicle->isIdling(2));
 	}
 
 	public function testIsMethods() {
@@ -684,6 +684,7 @@ EOT;
 	public function testOnStateChange() {
 		$this->Vehicle = $this->getMock('Vehicle', array(
 			'onStateChange', 'onStateIdling', 'onBeforeTransition', 'onAfterTransition'));
+		$this->Vehicle->id = 1;
 		$this->Vehicle->expects($this->once())->method('onBeforeTransition');
 		$this->Vehicle->expects($this->once())->method('onAfterTransition');
 		$this->Vehicle->expects($this->once())->method('onStateChange');
@@ -695,46 +696,46 @@ EOT;
 	public function testRules() {
 		$this->Vehicle = new RulesVehicle(1);
 
-		$this->assertTrue($this->Vehicle->canIgnite('driver'));
-		$this->assertFalse($this->Vehicle->canIgnite('thief'));
-		$this->assertTrue($this->Vehicle->canHardwire('thief'));
-		$this->assertFalse($this->Vehicle->canHardwire('driver'));
+		$this->assertTrue($this->Vehicle->canIgnite(null, 'driver'));
+		$this->assertFalse($this->Vehicle->canIgnite(null, 'thief'));
+		$this->assertTrue($this->Vehicle->canHardwire(null, 'thief'));
+		$this->assertFalse($this->Vehicle->canHardwire(null, 'driver'));
 
-		$this->Vehicle->ignite('driver');
+		$this->Vehicle->ignite(null, 'driver');
 
-		$this->Vehicle->igniteById(1, 'driver');
-		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
-		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
-		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
-		$this->assertEquals("driver", $this->Vehicle->getLastRoleById(1));
+		$this->Vehicle->ignite(1, 'driver');
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousState(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransition(1));
+		$this->assertEquals("driver", $this->Vehicle->getLastRole(1));
 
-		$this->assertFalse($this->Vehicle->canPark('driver'));
-		$this->assertTrue($this->Vehicle->canPark('thief'));
+		$this->assertFalse($this->Vehicle->canPark(null, 'driver'));
+		$this->assertTrue($this->Vehicle->canPark(null, 'thief'));
 	}
 
 	public function testRulesWithCanTransitionById() {
 		$this->Vehicle = new RulesVehicle(1);
 
-		$this->assertTrue($this->Vehicle->canIgniteById(1, 'driver'));
-		$this->assertFalse($this->Vehicle->canIgniteById(1, 'thief'));
-		$this->assertTrue($this->Vehicle->canHardwireById(1, 'thief'));
-		$this->assertFalse($this->Vehicle->canHardwireById(1, 'driver'));
+		$this->assertTrue($this->Vehicle->canIgnite(1, 'driver'));
+		$this->assertFalse($this->Vehicle->canIgnite(1, 'thief'));
+		$this->assertTrue($this->Vehicle->canHardwire(1, 'thief'));
+		$this->assertFalse($this->Vehicle->canHardwire(1, 'driver'));
 
-		$this->Vehicle->ignite('driver');
+		$this->Vehicle->ignite(null, 'driver');
 
-		$this->Vehicle->igniteById(1, 'driver');
-		$this->assertEquals("idling", $this->Vehicle->getCurrentStateById(1));
-		$this->assertEquals("parked", $this->Vehicle->getPreviousStateById(1));
-		$this->assertEquals("ignite", $this->Vehicle->getLastTransitionById(1));
-		$this->assertEquals("driver", $this->Vehicle->getLastRoleById(1));
+		$this->Vehicle->ignite(1, 'driver');
+		$this->assertEquals("idling", $this->Vehicle->getCurrentState(1));
+		$this->assertEquals("parked", $this->Vehicle->getPreviousState(1));
+		$this->assertEquals("ignite", $this->Vehicle->getLastTransition(1));
+		$this->assertEquals("driver", $this->Vehicle->getLastRole(1));
 
-		$this->assertFalse($this->Vehicle->canParkById(1, 'driver'));
-		$this->assertTrue($this->Vehicle->canParkById(1, 'thief'));
+		$this->assertFalse($this->Vehicle->canPark(1, 'driver'));
+		$this->assertTrue($this->Vehicle->canPark(1, 'thief'));
 	}
 
 	public function testRuleWithCallback() {
 		$this->Vehicle = new RulesVehicle(1);
-		$this->Vehicle->ignite('driver');
+		$this->Vehicle->ignite(null, 'driver');
 		$this->Vehicle->shiftUp();
 		$this->Vehicle->crash();
 
@@ -742,8 +743,8 @@ EOT;
 			return $role == 'mechanic';
 		});
 
-		$this->assertTrue($this->Vehicle->canRepair('mechanic'));
-		$this->assertTrue($this->Vehicle->repair('mechanic'));
+		$this->assertTrue($this->Vehicle->canRepair(null, 'mechanic'));
+		$this->assertTrue($this->Vehicle->repair(null, 'mechanic'));
 	}
 
 	public function testInvalidRules() {
@@ -755,7 +756,7 @@ EOT;
 
 	public function testWrongRole() {
 		$this->Vehicle = new RulesVehicle(1);
-		$this->assertFalse($this->Vehicle->ignite('thief'));
+		$this->assertFalse($this->Vehicle->ignite(null, 'thief'));
 	}
 
 	public function tearDown() {
