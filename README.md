@@ -154,8 +154,8 @@ class Controller .... {
             )
         ));
         // $this->Vehicle->getCurrentState() == 'parked'
-		if ($this->Vehicle->canIgnite('driver')) {
-       	 	$this->Vehicle->ignite('driver');
+		if ($this->Vehicle->canIgnite(null, 'driver')) {
+       	 	$this->Vehicle->ignite(null, 'driver');
        		$this->Vehicle->shiftUp();
         	// $this->Vehicle->getCurrentState() == 'first_gear'
 		}
