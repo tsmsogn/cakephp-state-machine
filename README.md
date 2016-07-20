@@ -173,3 +173,8 @@ into `fsm.gv` and ran:
 dot -Tpng -ofsm.png fsm.gv
 ```
 ![](fsm.png)
+
+## History
+
+- Support PHP 5.3
+- Support param $id in `is($state)`, `can($transition)` and `transition($transition)` methods
