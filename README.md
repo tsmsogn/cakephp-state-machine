@@ -154,8 +154,8 @@ class Controller .... {
             )
         ));
         // $this->Vehicle->getCurrentState() == 'parked'
-		if ($this->Vehicle->canIgnite('driver')) {
-       	 	$this->Vehicle->ignite('driver');
+		if ($this->Vehicle->canIgnite(null, 'driver')) {
+       	 	$this->Vehicle->ignite(null, 'driver');
        		$this->Vehicle->shiftUp();
         	// $this->Vehicle->getCurrentState() == 'first_gear'
 		}
@@ -173,3 +173,8 @@ into `fsm.gv` and ran:
 dot -Tpng -ofsm.png fsm.gv
 ```
 ![](fsm.png)
+
+## History
+
+- Support PHP 5.3
+- Support param $id in `is($state)`, `can($transition)` and `transition($transition)` methods
