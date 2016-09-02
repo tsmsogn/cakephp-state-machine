@@ -164,7 +164,7 @@ class StateMachineBehavior extends ModelBehavior {
 /**
  * checks if $state or Array of states are valid ones
  *
- * @param string /array $state a string representation of state or a array of states
+ * @param string|array $state a string representation of state or a array of states
  * @return bool
  * @author Frode Marton Meling
  */
@@ -187,7 +187,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $type find type (ref. CakeModel)
- * @param array /string $state    The state to find. this will be checked for validity.
+ * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
@@ -235,7 +235,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
  *
  * @param Model $model The model being acted on
- * @param array /string $state    The state to find. this will be checked for validity.
+ * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
@@ -249,7 +249,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Finds first record in a specific state. Supports additional conditions, but will overwrite conditions with state
  *
  * @param Model $model The model being acted on
- * @param array /string $state    The state to find. this will be checked for validity.
+ * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
@@ -263,7 +263,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Finds count of records in a specific state. Supports additional conditions, but will overwrite conditions with state
  *
  * @param Model $model The model being acted on
- * @param array /string $state    The state to find. this will be checked for validity.
+ * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
  * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
