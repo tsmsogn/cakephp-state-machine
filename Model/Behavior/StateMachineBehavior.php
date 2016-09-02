@@ -388,7 +388,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param string $transition The transition to listen to
  * @param string $triggerType Either before or after
  * @param string $cb The callback function that will be called
- * @param Boolean $bubble Whether or not to bubble other listeners
+ * @param bool $bubble Whether or not to bubble other listeners
  */
 	public function on(Model $model, $transition, $triggerType, $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
