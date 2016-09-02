@@ -40,6 +40,12 @@ class StateMachineBehavior extends ModelBehavior {
  */
 	protected $_availableStates = array();
 
+/**
+ * Adds a available state
+ *
+ * @param string $state The state to be added.
+ * @return void
+ */
 	protected function _addAvailableState($state) {
 		if ($state != 'All' && !in_array($state, $this->_availableStates)) {
 			$this->_availableStates[] = Inflector::camelize($state);
@@ -89,7 +95,7 @@ class StateMachineBehavior extends ModelBehavior {
  * $data = $this->Vehicle->myMethod();
  * }}}
  *
- * @param    Model $model The model being acted on
+ * @param Model $model The model being acted on
  * @param string $method The method na,e
  * @param string $cb The callback to execute
  * @throws InvalidArgumentException If the method already is registered
@@ -237,7 +243,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
- * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
+ * @param bool $withTransitions Whether or not to add available transitions to records, in its current state
+ * @param string $role The rule executing the transition
+ * @return array Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
 	public function findAllByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
@@ -251,7 +259,9 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
- * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
+ * @param bool $withTransitions Whether or not to add available transitions to records, in its current state
+ * @param string $role The rule executing the transition
+ * @return array Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
 	public function findFirstByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null) {
@@ -281,10 +291,11 @@ class StateMachineBehavior extends ModelBehavior {
  * }}}
  *
  * @param Model $model The model being acted on
- * @param string $role The rule executing the transition
- * @param int $id table id field to find object
  * @param string $transition The transition being initiated
+ * @param int $id table id field to find object
+ * @param string $role The rule executing the transition
  * @param bool $validate whether or not validation being checked
+ * @return bool Returns true if the transition be executed, otherwise false
  */
 	public function transition(Model $model, $transition, $id = null, $role = null, $validate = true) {
 		if ($id === null) {
@@ -389,6 +400,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param string $triggerType Either before or after
  * @param string $cb The callback function that will be called
  * @param bool $bubble Whether or not to bubble other listeners
+ * @return void
  */
 	public function on(Model $model, $transition, $triggerType, $cb, $bubble = true) {
 		$this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
@@ -404,6 +416,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param string $state The state which the machine should enter
  * @param string $cb The callback function that will be called
+ * @return void
  */
 	public function when(Model $model, $state, $cb) {
 		$this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
@@ -591,7 +604,7 @@ EOT;
  * Assuming that the contents are written to the file fsm.gv
  *
  * @param Model $model The model being acted on
- * @param array $role The role(s) executing the transition change. with an options array.
+ * @param array $roles The role(s) executing the transition change. with an options array.
  *                                 'role' => array('color' => color of the arrows)
  *                                 In the future many more Graphviz options can be added
  * @param array $dotOptions Options for nodes
@@ -650,6 +663,7 @@ EOT;
  * @param Model $model The model being acted on
  * @param array $data An array of a transition to be added
  * @param array $prepareArray The current array to populate
+ * @return mixed
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing
  */
@@ -861,8 +875,10 @@ EOT;
  * - onBefore<Transition>    i.e. onBeforePark()
  * - onAfter<Transition>    i.e. onAfterPark()
  *
+ * @param Model $model The model being acted on
  * @param string $transition The transition name
- * @param string $trigger Type Either before or after
+ * @param string $triggerType Either before or after
+ * @return void
  */
 	protected function _callTransitionListeners(Model $model, $transition, $triggerType = 'after') {
 		$transitionListeners = & $this->settings[$model->alias]['transition_listeners'];
