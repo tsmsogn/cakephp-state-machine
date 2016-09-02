@@ -70,16 +70,14 @@ class StateMachineBehavior extends ModelBehavior {
 					'is' . Inflector::camelize($stateTo)
 				) as $methodName) {
 					if (! $this->_hasMethod($model, $methodName)) {
-						$this->mapMethods['/' . $methodName . '/'] = 'is';
+						$this->mapMethods['/' . $methodName . '$/'] = 'is';
 					}
 				}
 			}
 
-			$this->mapMethods['/^can' . Inflector::camelize($transition) . 'ById' . '$/'] = 'canTransitionById';
 			$this->mapMethods['/^can' . Inflector::camelize($transition) . '$/'] = 'can';
 
 			$transitionFunction = Inflector::variable($transition);
-			$this->mapMethods['/^' . $transitionFunction . 'ById' . '$/'] = 'transitionById';
 			$this->mapMethods['/^' . $transitionFunction . '$/'] = 'transition';
 		}
 	}
@@ -225,7 +223,7 @@ class StateMachineBehavior extends ModelBehavior {
 			// Note! We need this empty array if no transitions are availble. then we do not need to test if array exist in views.
 			$modelRows[$key][$model->alias]['Transitions'] = array();
 			foreach ($allTransitions as $transition) {
-				if ($model->can($transition, $role)) {
+				if ($model->can($transition, $model->id, $role)) {
 					$modelRows[$key][$model->alias]['Transitions'][] = $transition;
 				}
 			}
@@ -275,22 +273,6 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
- * Allows moving from one state to another by giving the Id of the Model entity to transition
- * @param Model $model The model being acted on
- * @param integer $id table id field to find object
- * @param string $role The rule executing the transition
- * @param string $transition The transition being initiated
- */
-	public function transitionById(Model $model, $transition, $id = null, $role = null) {
-		$transition = $this->_deFormalizeById($transition);
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->transition($model, $transition, $role);
-		}
-	}
-
-/**
  * Allows moving from one state to another.
  * {{{
  * $this->Model->transition('shift_gear');
@@ -300,10 +282,18 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $role The rule executing the transition
+ * @param integer $id table id field to find object
  * @param string $transition The transition being initiated
  * @param bool $validate whether or not validation being checked
  */
-	public function transition(Model $model, $transition, $role = null, $validate = true) {
+	public function transition(Model $model, $transition, $id = null, $role = null, $validate = true) {
+		if ($id === null) {
+			$id = $model->getID();
+		}
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
 		$transition = Inflector::underscore($transition);
 		$state = $this->getStates($model, $transition);
 		if (! $state || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
@@ -349,15 +339,23 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $state The state being checked
+ * @param integer $id The id of the item to check
  * @return boolean whether or not the state machine is in the given state
  * @throws BadMethodCallException when method does not exists
  */
-	public function is(Model $model, $state) {
+	public function is(Model $model, $state, $id = null) {
+		if ($id === null) {
+			$id = $model->getID();
+		}
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
 		return $this->getCurrentState($model) === $this->_deFormalizeMethodName($state);
 	}
 
 /**
- * Checks whether or not the machine is able to perform transition givend its id
+ * Checks whether or not the machine is able to perform transition, in its current state
  *
  * @param Model $model The model being acted on
  * @param string $transition The transition being checked
@@ -366,25 +364,14 @@ class StateMachineBehavior extends ModelBehavior {
  * @return boolean whether or not the machine can perform the transition
  * @throws BadMethodCallException when method does not exists
  */
-	public function canTransitionById(Model $model, $transition, $id, $role = null) {
-		$transition = $this->_deFormalizeMethodNameById($transition);
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->can($model, $transition, $role);
+	public function can(Model $model, $transition, $id = null, $role = null) {
+		if ($id === null) {
+			$id = $model->getID();
 		}
-	}
-
-/**
- * Checks whether or not the machine is able to perform transition, in its current state
- *
- * @param Model $model The model being acted on
- * @param string $transition The transition being checked
- * @param string $role The role which should execute the transition
- * @return boolean whether or not the machine can perform the transition
- * @throws BadMethodCallException when method does not exists
- */
-	public function can(Model $model, $transition, $role = null) {
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
 		$transition = $this->_deFormalizeMethodName($transition);
 		if (! $this->getStates($model, $transition) || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
 			return false;
@@ -451,106 +438,74 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
- * Returns the current state of the machine givend its id
- * 
- * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
- * @return string The current state of the machine
- */
-	public function getCurrentStateById(Model $model, $id) {
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->getCurrentState($model);
-		}
-		return false;
-	}
-
-/**
  * Returns the current state of the machine
  * 
  * @param Model $model The model being acted on
- * @return string The current state of the machine
- */
-	public function getCurrentState(Model $model) {
-		return (($model->field('state') != null)) ? $model->field('state') : $model->initialState;
-	}
-
-/**
- * Returns the current state of the machine givend its id
- * 
- * @param Model $model The model being acted on
  * @param integer $id The id of the item to check
  * @return string The current state of the machine
  */
-	public function getPreviousStateById(Model $model, $id) {
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->getPreviousState($model);
+	public function getCurrentState(Model $model, $id = null) {
+		if ($id === null) {
+			$id = $model->getID();
 		}
-		return false;
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
+		return (($model->field('state') != null)) ? $model->field('state') : $model->initialState;
 	}
 
 /**
  * Returns the previous state of the machine
  * 
  * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
  * @return string The previous state of the machine
  */
-	public function getPreviousState(Model $model) {
-		return $model->field('previous_state');
-	}
-
-/**
- * Returns the last transition ran of the machine givend its id
- * 
- * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
- * @return string The current state of the machine
- */
-	public function getLastTransitionById(Model $model, $id) {
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->getLastTransition($model);
+	public function getPreviousState(Model $model, $id = null) {
+		if ($id === null) {
+			$id = $model->getID();
 		}
-		return false;
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
+		return $model->field('previous_state');
 	}
 
 /**
  * Returns the last transition ran
  * 
  * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
  * @return string The transition last ran of the machine
  */
-	public function getLastTransition(Model $model) {
-		return $model->field('last_transition');
-	}
-
-/**
- * Returns the role that ran last transition of the machine givend its id
- * 
- * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
- * @return string The current state of the machine
- */
-	public function getLastRoleById(Model $model, $id) {
-		$modelRow = $model->findById($id);
-		if ($modelRow) {
-			$model->id = $modelRow[$model->alias]['id'];
-			return $this->getLastRole($model);
+	public function getLastTransition(Model $model, $id = null) {
+		if ($id === null) {
+			$id = $model->getID();
 		}
-		return false;
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
+		return $model->field('last_transition');
 	}
 
 /**
  * Returns the role that ran the last transition
  * 
  * @param Model $model The model being acted on
+ * @param integer $id The id of the item to check
  * @return string The role that last ran a transition of the machine
  */
-	public function getLastRole(Model $model) {
+	public function getLastRole(Model $model, $id = null) {
+		if ($id === null) {
+			$id = $model->getID();
+		}
+		if ($id === false) {
+			return false;
+		}
+		$model->id = $id;
 		return $model->field('last_role');
 	}
 
@@ -950,28 +905,6 @@ EOT;
  */
 	protected function _deFormalizeMethodName($name) {
 		return Inflector::underscore(preg_replace('#^(can|is)#', '', $name));
-	}
-
-/**
- * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
- * the remaining text.
- *
- * @param string $name The model name
- * @return string The deformalized method name
- */
-	protected function _deFormalizeById($name) {
-		return Inflector::underscore(preg_replace('#By[a-zA-Z]+$#', '', $name));
-	}
-
-/**
- * Deformalizes a method name, removing 'can' and 'is' as well as underscoring
- * the remaining text.
- *
- * @param string $name The model name
- * @return string The deformalized method name
- */
-	protected function _deFormalizeMethodNameById($name) {
-		return Inflector::underscore(preg_replace('#^can(.+)ById$#', '$1', $name));
 	}
 
 /**
