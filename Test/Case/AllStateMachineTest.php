@@ -1,4 +1,5 @@
 <?php
+
 /**
  * All StateMachine plugin tests
  */

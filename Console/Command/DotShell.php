@@ -19,9 +19,9 @@ class DotShell extends Shell {
 
 /**
  * This function generates a png file from a given dot. A dot can be generated wit *toDot functions
- * @param  Model	$model		 The model being acted on
- * @param  string   $dot         The contents for graphviz
- * @param  string   $destFile    Name with full path to where file is to be created
+ * @param  Model $model The model being acted on
+ * @param  string $dot The contents for graphviz
+ * @param  string $destFile Name with full path to where file is to be created
  * @return return                returns whatever shell_exec returns
  */
 	protected function _generatePng($dot, $destFile) {
@@ -43,19 +43,19 @@ class DotShell extends Shell {
 				$this->Model = new $this->args[0](1);
 
 				// generate all roles
-			/*	$dot = $this->Model->createDotFileForRoles($this->Model->roles, array(
-					'color' => 'lightgrey',
-					'activeColor' => 'green'
-					));
-				$this->_generatePng($dot, TMP . $this->args[2]);
-*/
+				/*	$dot = $this->Model->createDotFileForRoles($this->Model->roles, array(
+						'color' => 'lightgrey',
+						'activeColor' => 'green'
+						));
+					$this->_generatePng($dot, TMP . $this->args[2]);
+				*/
 				$rolesForPopping = $this->Model->roles;
 				$timesToPop = count($rolesForPopping);
 				do {
 					$dot = $this->Model->createDotFileForRoles($rolesForPopping, array(
 						'color' => 'lightgrey',
 						'activeColor' => 'green'
-						));
+					));
 					$this->_generatePng($dot, TMP . implode('_', $this->Model->getAllRoles($rolesForPopping)) . '_' . $this->args[2]);
 					array_pop($rolesForPopping);
 					$timesToPop--;
@@ -65,7 +65,7 @@ class DotShell extends Shell {
 					$dot = $this->Model->createDotFileForRoles(array($role => $this->Model->roles[$role]), array(
 						'color' => 'lightgrey',
 						'activeColor' => 'green'
-						));
+					));
 					$this->_generatePng($dot, TMP . $role . '_' . $this->args[2]);
 				}
 				# code...
