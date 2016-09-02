@@ -125,9 +125,9 @@ class StateMachineBehavior extends ModelBehavior {
  * Updates the model's state when a $model->save() call is performed
  *
  * @param Model $model The model being acted on
- * @param boolean $created Whether or not the model was created
+ * @param bool $created Whether or not the model was created
  * @param array $options Options passed to save
- * @return boolean
+ * @return bool
  */
 	public function afterSave(Model $model, $created, $options = array()) {
 		if ($created) {
@@ -165,7 +165,7 @@ class StateMachineBehavior extends ModelBehavior {
  * checks if $state or Array of states are valid ones
  *
  * @param string /array $state a string representation of state or a array of states
- * @return boolean
+ * @return bool
  * @author Frode Marton Meling
  */
 	protected function _validState($state) {
@@ -340,7 +340,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param Model $model The model being acted on
  * @param string $state The state being checked
  * @param integer $id The id of the item to check
- * @return boolean whether or not the state machine is in the given state
+ * @return bool whether or not the state machine is in the given state
  * @throws BadMethodCallException when method does not exists
  */
 	public function is(Model $model, $state, $id = null) {
@@ -361,7 +361,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param string $transition The transition being checked
  * @param integer $id The id of the item to check
  * @param string $role The role which should execute the transition
- * @return boolean whether or not the machine can perform the transition
+ * @return bool whether or not the machine can perform the transition
  * @throws BadMethodCallException when method does not exists
  */
 	public function can(Model $model, $transition, $id = null, $role = null) {
@@ -690,7 +690,7 @@ EOT;
  *
  * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
  * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
- * @return boolean Returns true if all roles are present, otherwise false
+ * @return bool Returns true if all roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -709,7 +709,7 @@ EOT;
  *
  * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
  * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
- * @return boolean Returns true if just one of the roles are present, otherwise false
+ * @return bool Returns true if just one of the roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -729,7 +729,7 @@ EOT;
  *
  * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
  * @param Array &$resultArray This function writes to this parameter by reference
- * @return boolean Returns true if added, otherwise false
+ * @return bool Returns true if added, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -748,7 +748,7 @@ EOT;
  * This helperfunction checks if state and transition is present in the array
  *
  * @param array $data The array to check
- * @return boolean true if array is valid, otherwise false
+ * @return bool true if array is valid, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -763,7 +763,7 @@ EOT;
  * This helperfunction checks if state, transition and depends exist in array
  *
  * @param array $data The array to check
- * @return boolean True if state, transition and depends exist in array, otherwise false
+ * @return bool True if state, transition and depends exist in array, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -779,7 +779,7 @@ EOT;
  *
  * @param array $data The array for testing
  * @param array $prepareArray The array to check against
- * @return boolean index in array if state and transition is present in prepareArray, otherwise false
+ * @return bool index in array if state and transition is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -797,7 +797,7 @@ EOT;
  *
  * @param array $data The array for testing
  * @param array $prepareArray The array to check against
- * @return boolean the index in array if state, transition and depends is present in prepareArray, otherwise false
+ * @return bool the index in array if state, transition and depends is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
  * @todo   Add separate tests
  */
@@ -821,7 +821,7 @@ EOT;
  * @param string $role The role executing the transition change
  * @param string $transition The transition
  * @throws InvalidArgumentException if the transition require it be executed by a rule, and none is given
- * @return boolean Whether or not the role may perform the action
+ * @return bool Whether or not the role may perform the action
  */
 	protected function _checkRoleAgainstRule(Model $model, $role, $transition) {
 		if (!isset($model->transitionRules[$transition])) {
@@ -912,7 +912,7 @@ EOT;
  *
  * @param Model $model The model being acted on
  * @param string $method The method's name
- * @return boolean True if the method exists, false otherwise
+ * @return bool True if the method exists, false otherwise
  */
 	protected function _hasMethod(Model $model, $method) {
 		return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
