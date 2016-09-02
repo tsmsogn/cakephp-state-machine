@@ -282,7 +282,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $role The rule executing the transition
- * @param integer $id table id field to find object
+ * @param int $id table id field to find object
  * @param string $transition The transition being initiated
  * @param bool $validate whether or not validation being checked
  */
@@ -339,7 +339,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $state The state being checked
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @return bool whether or not the state machine is in the given state
  * @throws BadMethodCallException when method does not exists
  */
@@ -359,7 +359,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param string $transition The transition being checked
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @param string $role The role which should execute the transition
  * @return bool whether or not the machine can perform the transition
  * @throws BadMethodCallException when method does not exists
@@ -441,7 +441,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Returns the current state of the machine
  *
  * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @return string The current state of the machine
  */
 	public function getCurrentState(Model $model, $id = null) {
@@ -459,7 +459,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Returns the previous state of the machine
  *
  * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @return string The previous state of the machine
  */
 	public function getPreviousState(Model $model, $id = null) {
@@ -477,7 +477,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Returns the last transition ran
  *
  * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @return string The transition last ran of the machine
  */
 	public function getLastTransition(Model $model, $id = null) {
@@ -495,7 +495,7 @@ class StateMachineBehavior extends ModelBehavior {
  * Returns the role that ran the last transition
  *
  * @param Model $model The model being acted on
- * @param integer $id The id of the item to check
+ * @param int $id The id of the item to check
  * @return string The role that last ran a transition of the machine
  */
 	public function getLastRole(Model $model, $id = null) {
