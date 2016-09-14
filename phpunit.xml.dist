@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit colors="true" stopOnFailure="true" encoding="utf-8">
-    <filter>
-        <whitelist>
-            <directory>Controller</directory>
-            <directory>Model</directory>
-            <directory>View</directory>
-            <directory>Lib</directory>
-            <directory>Console</directory>
-        </whitelist>
-    </filter>
-    <logging>
-        <log type="coverage-text" target="php://stdout" showUncoveredFiles="true"/>
-    </logging>
+	<filter>
+		<whitelist>
+			<directory>Controller</directory>
+			<directory>Model</directory>
+			<directory>View</directory>
+			<directory>Lib</directory>
+			<directory>Console</directory>
+		</whitelist>
+	</filter>
+	<logging>
+		<log type="coverage-text" target="php://stdout" showUncoveredFiles="true" />
+	</logging>
 </phpunit>
