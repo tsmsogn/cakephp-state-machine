@@ -647,7 +647,7 @@ EOT;
  * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
  * @return Array Returns an array of roles like array('role1', 'role2'...)
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	public function getAllRoles(Model $model, $roles) {
 		$arrayToReturn = array();
@@ -665,7 +665,7 @@ EOT;
  * @param array $prepareArray The current array to populate
  * @return mixed
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing @codingStandardsIgnoreLine
+ * @todo Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing @codingStandardsIgnoreLine
  */
 	public function addToPrepareArray(Model $model, $data, $prepareArray) {
 		if (!is_array($data)) {
@@ -706,7 +706,7 @@ EOT;
  * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
  * @return bool Returns true if all roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _containsAllRoles($roles, $allRoles) {
 		foreach ($allRoles as $role => $options) {
@@ -725,7 +725,7 @@ EOT;
  * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
  * @return bool Returns true if just one of the roles are present, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _containsAnyRoles($roles, $allRoles) {
 		$atleastOne = false;
@@ -745,7 +745,7 @@ EOT;
  * @param Array &$resultArray This function writes to this parameter by reference
  * @return bool Returns true if added, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _addRoles($roles, &$resultArray) {
 		$addedAtleastOne = false;
@@ -764,7 +764,7 @@ EOT;
  * @param array $data The array to check
  * @return bool true if array is valid, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _stateAndTransitionExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition'])) {
@@ -779,7 +779,7 @@ EOT;
  * @param array $data The array to check
  * @return bool True if state, transition and depends exist in array, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _stateTransitionAndDependsExist($data) {
 		if (isset($data['stateFrom']) && isset($data['stateTo']) && isset($data['transition']) && isset($data['depends'])) {
@@ -795,7 +795,7 @@ EOT;
  * @param array $prepareArray The array to check against
  * @return bool index in array if state and transition is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _stateAndTransitionInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
@@ -813,7 +813,7 @@ EOT;
  * @param array $prepareArray The array to check against
  * @return bool the index in array if state, transition and depends is present in prepareArray, otherwise false
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo   Add separate tests @codingStandardsIgnoreLine
+ * @todo Add separate tests @codingStandardsIgnoreLine
  */
 	protected function _stateTransitionAndDependsInArray($data, $prepareArray) {
 		foreach ($prepareArray as $key => $value) {
