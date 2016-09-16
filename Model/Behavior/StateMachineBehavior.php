@@ -195,7 +195,7 @@ class StateMachineBehavior extends ModelBehavior {
  * @param string $type find type (ref. CakeModel)
  * @param array|string $state    The state to find. this will be checked for validity.
  * @param array $params Regular $params array for CakeModel->find
- * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
+ * @return array|bool|null            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
  * @author Frode Marton Meling
  */
 	protected function _findByState(Model $model, $type, $state = null, $params = array()) {
@@ -455,7 +455,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param int $id The id of the item to check
- * @return string The current state of the machine
+ * @return bool|false|mixed|string The current state of the machine
  */
 	public function getCurrentState(Model $model, $id = null) {
 		if ($id === null) {
@@ -473,7 +473,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param int $id The id of the item to check
- * @return string The previous state of the machine
+ * @return bool|false|string The previous state of the machine
  */
 	public function getPreviousState(Model $model, $id = null) {
 		if ($id === null) {
@@ -491,7 +491,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param int $id The id of the item to check
- * @return string The transition last ran of the machine
+ * @return bool|false|string The transition last ran of the machine
  */
 	public function getLastTransition(Model $model, $id = null) {
 		if ($id === null) {
@@ -509,7 +509,7 @@ class StateMachineBehavior extends ModelBehavior {
  *
  * @param Model $model The model being acted on
  * @param int $id The id of the item to check
- * @return string The role that last ran a transition of the machine
+ * @return bool|false|string The role that last ran a transition of the machine
  */
 	public function getLastRole(Model $model, $id = null) {
 		if ($id === null) {
