@@ -642,16 +642,6 @@ EOT;
 				'activeColor' => 'green'
 			)
 		));
-		// debug($expected, $this->Vehicle->createDotFileForRoles(array(
-		// 	'driver' => array(
-		// 		'color' => 'blue'),
-		// 	'thief' => array(
-		// 		'color' => 'red')
-		// 	), array(
-		// 	'color' => 'lightgrey',
-		// 	'activeColor' => 'green'
-		// 	)
-		// ));
 	}
 
 	public function testCallable() {

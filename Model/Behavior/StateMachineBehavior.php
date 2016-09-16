@@ -569,15 +569,12 @@ EOT;
 				foreach ($states as $stateFrom => $stateTo) {
 					// if roles are not defined in transitionRules we add or if roles are defined, at least one needs to be present
 					if (!isset($model->transitionRules[$transition]['role']) || (isset($model->transitionRules[$transition]['role']) && $this->_containsAnyRoles($model->transitionRules[$transition]['role'], $roles))) {
-						$dataToPrepare = array();
 						$dataToPrepare = array(
 							'stateFrom' => $stateFrom,
 							'stateTo' => $stateTo,
 							'transition' => $transition
 						);
 						if (isset($model->transitionRules[$transition]['role'])) {
-							//debug($role);
-							//debug($model->transitionRules[$transition]['role']);
 							if (in_array($role, $model->transitionRules[$transition]['role'])) {
 								$dataToPrepare['roles'] = array($role);
 							}
@@ -614,12 +611,10 @@ EOT;
  * @author Frode Marton Meling <fm@saltship.com>
  */
 	public function createDotFileForRoles(Model $model, $roles, $dotOptions) {
-		//$rand = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
 		$transitionsArray = $this->prepareForDotWithRoles($model, $roles);
 		$digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n%s}\n";
 		$activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState($model)) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
 
-		//$node = "\t%s -> %s [ margin= \"0.9,0.9\" style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\"%s headlabel=\"%s\" taillabel=\"%s\"];\n"; // with head and tail labels
 		$node = "\t\"%s\" -> \"%s\" [ style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\" %s];\n";
 		$dotNodes = "";
 
@@ -631,8 +626,6 @@ EOT;
 				(isset($transition['roles']) && (!$this->_containsAllRoles($transition['roles'], $roles) || (count($roles) == 1))) ? 'by (' . Inflector::humanize(implode(' or ', $transition['roles'])) . ')' : 'by All',
 				(isset($transition['depends'])) ? "\nif " . Inflector::humanize($transition['depends']) : '',
 				(isset($transition['roles']) && count($transition['roles']) == 1) ? "color = \"" . $roles[$transition['roles'][0]]['color'] . "\"" : ''//,
-			//'when' . Inflector::camelize($transition['stateTo']),
-			//'on' . Inflector::camelize($transition['stateFrom'])
 			);
 		}
 		$graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for ' . Inflector::humanize($model->alias) . ' role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($model, $roles))), $activeState, $dotNodes);

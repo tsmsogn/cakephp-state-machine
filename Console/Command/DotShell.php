@@ -34,7 +34,6 @@ class DotShell extends Shell {
 			return false;
 		}
 		$dotExec = "echo '%s' | dot -Tpng -o%s";
-		$path = pathinfo($destFile);
 		$command = sprintf($dotExec, $dot, $destFile);
 		return shell_exec($command);
 	}
