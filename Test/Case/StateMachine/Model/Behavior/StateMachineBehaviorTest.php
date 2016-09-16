@@ -75,7 +75,7 @@ class RulesVehicle extends BaseVehicle {
 			'role' => array('driver'),
 			'depends' => 'has_key'
 		),
-		'park'	=> array(
+		'park' => array(
 			'role' => array('driver', 'thief'),
 			'depends' => 'available_parking'
 		),
@@ -238,7 +238,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertFalse(isset($testTransitions[0]['Vehicle']['Transitions']));
 
 		$this->Vehicle = new RulesVehicle(1);
-		$testTransitions = $this->Vehicle->findAllByState('parked', array(), true, 'driver' );
+		$testTransitions = $this->Vehicle->findAllByState('parked', array(), true, 'driver');
 		$this->assertEqual(array('ignite', 'turn_off'), $testTransitions[0]['RulesVehicle']['Transitions']);
 	}
 
@@ -273,7 +273,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 		$this->assertFalse(isset($testTransitions[0]['Vehicle']['Transitions']));
 
 		$this->Vehicle = new RulesVehicle(1);
-		$testTransitions = $this->Vehicle->findFirstByState('parked', array(), true, 'driver' );
+		$testTransitions = $this->Vehicle->findFirstByState('parked', array(), true, 'driver');
 		$this->assertEqual(array('ignite', 'turn_off'), $testTransitions[0]['RulesVehicle']['Transitions']);
 	}
 
@@ -327,13 +327,13 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testOnMethods() {
 		$scope = $this;
-		$this->Vehicle->onIgnite('before', function($currentState, $previousState, $transition) use ($scope) {
+		$this->Vehicle->onIgnite('before', function ($currentState, $previousState, $transition) use ($scope) {
 			$scope->assertEquals("parked", $currentState);
 			$scope->assertNull($previousState);
 			$scope->assertEquals("ignite", $transition);
 		});
 
-		$this->Vehicle->on('ignite', 'after', function($currentState, $previousState, $transition) use ($scope) {
+		$this->Vehicle->on('ignite', 'after', function ($currentState, $previousState, $transition) use ($scope) {
 			$scope->assertEquals("idling", $currentState);
 			$scope->assertEquals("parked", $previousState);
 			$scope->assertEquals("ignite", $transition);
@@ -352,7 +352,7 @@ class StateMachineBehaviorTest extends CakeTestCase {
 	}
 
 	public function testWhenMethods() {
-		$this->Vehicle->whenStalled(function() {
+		$this->Vehicle->whenStalled(function () {
 			$this->assertEquals("stalled", $this->Vehicle->getCurrentState());
 		});
 
@@ -366,11 +366,11 @@ class StateMachineBehaviorTest extends CakeTestCase {
 
 	public function testBubble() {
 		$scope = $this;
-		$this->Vehicle->on('ignite', 'before', function() use ($scope) {
+		$this->Vehicle->on('ignite', 'before', function () use ($scope) {
 			$scope->assertEquals("parked", $scope->Vehicle->getCurrentState());
 		}, false);
 
-		$this->Vehicle->on('transition', 'before', function() use ($scope) {
+		$this->Vehicle->on('transition', 'before', function () use ($scope) {
 			// this should never be called
 			$scope->assertTrue(false);
 		});
@@ -633,13 +633,13 @@ if Available Parking" ];
 
 EOT;
 		$this->assertEqual($expected, $this->Vehicle->createDotFileForRoles(array(
-			'driver' => array(
-				'color' => 'blue'),
-			'thief' => array(
-				'color' => 'red')
+				'driver' => array(
+					'color' => 'blue'),
+				'thief' => array(
+					'color' => 'red')
 			), array(
-			'color' => 'lightgrey',
-			'activeColor' => 'green'
+				'color' => 'lightgrey',
+				'activeColor' => 'green'
 			)
 		));
 		// debug($expected, $this->Vehicle->createDotFileForRoles(array(
@@ -655,7 +655,7 @@ EOT;
 	}
 
 	public function testCallable() {
-		$this->Vehicle->addMethod('whatIsMyName', function(Model $model, $method, $name) {
+		$this->Vehicle->addMethod('whatIsMyName', function (Model $model, $method, $name) {
 			return $model->alias . '-' . $method . '-' . $name;
 		});
 
@@ -663,11 +663,11 @@ EOT;
 	}
 
 	public function testExistingCallable() {
-		$this->Vehicle->addMethod('foobar', function() {
+		$this->Vehicle->addMethod('foobar', function () {
 		});
 
 		$this->setExpectedException('InvalidArgumentException');
-		$this->Vehicle->addMethod('foobar', function() {
+		$this->Vehicle->addMethod('foobar', function () {
 		});
 	}
 
@@ -739,7 +739,7 @@ EOT;
 		$this->Vehicle->shiftUp();
 		$this->Vehicle->crash();
 
-		$this->Vehicle->addMethod('hasTools', function($role) {
+		$this->Vehicle->addMethod('hasTools', function ($role) {
 			return $role == 'mechanic';
 		});
 
