@@ -10,8 +10,8 @@ http://en.wikipedia.org/wiki/State_machine
 ## Installation
 First you need to alter the tables of the models you want to use StateMachine:
 ```sql
-ALTER TABLE `vehicle` ADD `state` VARCHAR(50);
-ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50);
+ALTER TABLE `vehicle` ADD `state` VARCHAR(50) NULL;
+ALTER TABLE `vehicle` ADD `previous_state` VARCHAR(50) NULL;
 ```
 
 ## Features
