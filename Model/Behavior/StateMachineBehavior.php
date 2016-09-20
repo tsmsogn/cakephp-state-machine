@@ -210,7 +210,7 @@ class StateMachineBehavior extends ModelBehavior {
 	}
 
 /**
- * This function will add all availble (runnable) transitions on a model and add it to the dataArray given to the function.
+ * This function will add all available (runnable) transitions on a model and add it to the dataArray given to the function.
  *
  * @param Model $model The model being acted on
  * @param array $modelRows The model dataArray. this is an array of Models returned from a model->find.
@@ -226,7 +226,7 @@ class StateMachineBehavior extends ModelBehavior {
 		$allTransitions = $this->getAllTransitions($model);
 		foreach ($modelRows as $key => $modelRow) {
 			$model->id = $modelRow[$model->alias]['id'];
-			// Note! We need this empty array if no transitions are availble. then we do not need to test if array exist in views.
+			// Note! We need this empty array if no transitions are available. then we do not need to test if array exist in views.
 			$modelRows[$key][$model->alias]['Transitions'] = array();
 			foreach ($allTransitions as $transition) {
 				if ($model->can($transition, $model->id, $role)) {
@@ -658,7 +658,7 @@ EOT;
  * @param array $prepareArray The current array to populate
  * @return mixed
  * @author Frode Marton Meling <fm@saltship.com>
- * @todo Move this to protected, Needs a reimplementation of the functiun in test to make it public for testing @codingStandardsIgnoreLine
+ * @todo Move this to protected, Needs a reimplementation of the function in test to make it public for testing @codingStandardsIgnoreLine
  */
 	public function addToPrepareArray(Model $model, $data, $prepareArray) {
 		if (!is_array($data)) {
