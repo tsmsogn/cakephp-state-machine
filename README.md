@@ -177,4 +177,4 @@ dot -Tpng -ofsm.png fsm.gv
 ## History
 
 - Support PHP 5.3
-- Support param $id in `is($state)`, `can($transition)` and `transition($transition)` methods. It specifies record to be read
+- Add param $id to `is($state)`, `can($transition)` and `transition($transition)` methods. It specifies record to be read
