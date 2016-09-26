@@ -1,6 +1,8 @@
 CakePHP State Machine
 =====================
-[![Build Status](https://travis-ci.org/tsmsogn/cakephp-state-machine.svg?branch=master)](https://travis-ci.org/tsmsogn/cakephp-state-machine) [![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/tsmsogn/cakephp-state-machine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/tsmsogn/cakephp-state-machine/?branch=master) [![Latest Stable Version](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/v/stable.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine) [![Total Downloads](https://poser.pugx.org/davidsteinsland/cakephp-state-machine/downloads.png)](https://packagist.org/packages/davidsteinsland/cakephp-state-machine)
+[![Build Status](https://travis-ci.org/tsmsogn/cakephp-state-machine.svg?branch=master)](https://travis-ci.org/tsmsogn/cakephp-state-machine)
+[![Coverage Status](https://coveralls.io/repos/davidsteinsland/cakephp-state-machine/badge.png?branch=master)](https://coveralls.io/r/davidsteinsland/cakephp-state-machine?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/tsmsogn/cakephp-state-machine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/tsmsogn/cakephp-state-machine/?branch=master)
 
 Documentation is not finished yet either. See the tests if you want to learn something, as all aspects of the state machine is tested there.
 
