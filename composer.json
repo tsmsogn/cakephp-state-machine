@@ -1,5 +1,5 @@
 {
-    "name": "davidsteinsland/cakephp-state-machine",
+    "name": "tsmsogn/cakephp-state-machine",
     "description": "StateMachineBehavior for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "state", "machine"],
@@ -9,6 +9,10 @@
         {
             "name": "David Steinsland",
             "role": "Author"
+        },
+        {
+            "name": "tsmsogn",
+            "email": "tsmsogn@gmail.com"
         }
     ],
     "require": {
