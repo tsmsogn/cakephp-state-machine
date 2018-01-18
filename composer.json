@@ -3,7 +3,7 @@
     "description": "StateMachineBehavior for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "state", "machine"],
-    "homepage": "https://github.com/davidsteinsland/cakephp-state-machine",
+    "homepage": "https://github.com/tsmsogn/cakephp-state-machine",
     "license": "MIT",
     "authors": [
         {
