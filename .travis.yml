@@ -5,6 +5,8 @@ php:
   - 5.4
   - 5.5
 
+dist: precise # https://docs.travis-ci.com/user/reference/trusty#PHP-images
+
 env:
   global:
     - PLUGIN_NAME=StateMachine
