@@ -1,5 +1,6 @@
 <?php
-App::uses('StateMachineBehavior', 'StateMachine.Model/Behavior');
+
+namespace Test\Case\StateMachine\Model\Behavior;
 
 class BaseVehicle extends CakeTestModel {
 
@@ -122,10 +123,10 @@ class ValidationsVehicle extends Vehicle {
 
 }
 
-class StateMachineBehaviorTest extends CakeTestCase {
+class StateMachineBehaviorTest extends TestCase {
 
 	public $fixtures = array(
-		'plugin.state_machine.vehicle'
+		'plugin.state_machine.vehicles'
 	);
 
 	public $Vehicle;

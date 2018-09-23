@@ -2,7 +2,9 @@
 /**
  * All StateMachine plugin tests
  */
-class AllStateMachineTest extends CakeTestCase {
+namespace Test\Case;
+
+class AllStateMachineTest extends TestCase {
 
 /**
  * Suite define the tests for this plugin
@@ -12,7 +14,7 @@ class AllStateMachineTest extends CakeTestCase {
 	public static function suite() {
 		$suite = new CakeTestSuite('All StateMachine test');
 
-		$path = CakePlugin::path('StateMachine') . 'Test' . DS . 'Case' . DS;
+		$path = Plugin::path('StateMachine') . 'Test' . DS . 'Case' . DS;
 		$suite->addTestDirectoryRecursive($path);
 
 		return $suite;

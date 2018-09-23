@@ -8,8 +8,8 @@
  *
  * @author David Steinsland
  */
-App::uses('Model', 'Model');
-App::uses('Inflector', 'Utility');
+namespace Model\Behavior;
+
 
 class StateMachineBehavior extends ModelBehavior {
 

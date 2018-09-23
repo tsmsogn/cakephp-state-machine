@@ -1,6 +1,8 @@
 <?php
 
-class VehicleFixture extends CakeTestFixture {
+namespace Test\Fixture;
+
+class VehicleFixture extends TestFixture {
 
 	public $fields = array(
 		'id' => array('type' => 'integer', 'key' => 'primary'),

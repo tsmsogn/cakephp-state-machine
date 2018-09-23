@@ -1,8 +1,9 @@
 <?php
 /**
  */
+namespace Console\Command;
 
-App::uses('String', 'Utility');
+
 
 /**
  * Dot Shell Class
