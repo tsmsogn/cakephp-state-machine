@@ -1,2 +1,3 @@
-.komodotools
-*.komodoproject
+/composer.lock
+/phpunit.xml
+/vendor
