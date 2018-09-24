@@ -142,7 +142,7 @@ class StateMachineBehaviorTest extends TestCase
 {
 
     public $fixtures = array(
-        'plugin.state_machine.vehicles'
+        'plugin.tsmsogn/state_machine.vehicles'
     );
 
     public $Vehicle;

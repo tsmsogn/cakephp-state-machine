@@ -4,7 +4,7 @@ namespace Tsmsogn\StateMachine\Test\Fixture;
 
 use Cake\TestSuite\Fixture\TestFixture;
 
-class VehicleFixture extends TestFixture
+class VehiclesFixture extends TestFixture
 {
 
     public $fields = array(
