@@ -1,6 +1,8 @@
 <?php
 
-namespace Test\Fixture;
+namespace Tsmsogn\StateMachine\Test\Fixture;
+
+use Cake\TestSuite\Fixture\TestFixture;
 
 class VehicleFixture extends TestFixture
 {

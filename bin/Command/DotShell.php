@@ -3,6 +3,8 @@
  */
 namespace Console\Command;
 
+use Cake\Console\Shell;
+
 
 /**
  * Dot Shell Class

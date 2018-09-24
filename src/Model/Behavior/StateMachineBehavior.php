@@ -8,10 +8,13 @@
  *
  * @author David Steinsland
  */
-namespace Model\Behavior;
+namespace Tsmsogn\StateMachine\Model\Behavior;
 
 
-class StateMachineBehavior extends ModelBehavior
+use Cake\ORM\Behavior;
+use Cake\Utility\Inflector;
+
+class StateMachineBehavior extends Behavior
 {
 
     /**

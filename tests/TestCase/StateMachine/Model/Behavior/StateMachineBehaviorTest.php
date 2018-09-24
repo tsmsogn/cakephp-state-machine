@@ -1,8 +1,11 @@
 <?php
 
-namespace Test\Case\StateMachine\Model\Behavior;
+namespace Tsmsogn\StateMachine\Test\TestCase\Model\Behavior;
 
-class BaseVehicle extends CakeTestModel
+use Cake\ORM\Table;
+use Cake\TestSuite\TestCase;
+
+class BaseVehicle extends Table
 {
 
     public $useTable = 'vehicles';
