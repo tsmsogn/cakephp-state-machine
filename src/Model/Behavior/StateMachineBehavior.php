@@ -11,8 +11,13 @@
 namespace Tsmsogn\StateMachine\Model\Behavior;
 
 
+use ArrayObject;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\Event;
 use Cake\ORM\Behavior;
 use Cake\Utility\Inflector;
+use InvalidArgumentException;
+use Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface;
 
 class StateMachineBehavior extends Behavior
 {
@@ -27,7 +32,7 @@ class StateMachineBehavior extends Behavior
         '/on([A-Z][a-zA-Z0-9]+)/' => 'on'
     );
 
-    protected $_defaultSettings = array(
+    protected $_defaultConfig = array(
         'transition_listeners' => array(
             'transition' => array(
                 'before' => array(),
@@ -35,7 +40,12 @@ class StateMachineBehavior extends Behavior
             )
         ),
         'state_listeners' => array(),
-        'methods' => array()
+        'methods' => array(),
+        'initial_state' => null,
+        'state_field' => 'state',
+        'previous_state_field' => 'previous_state',
+        'last_role_field' => 'last_role',
+        'last_transition_field' => 'last_transition',
     );
 
     /**
@@ -63,17 +73,14 @@ class StateMachineBehavior extends Behavior
      * StateMachine->can<Transition>    i.e. StateMachine->canShiftGear()
      * StateMachine-><transition>        i.e. StateMachine->shiftGear();
      *
-     * @param Model $model The model being used
      * @param array $config Configuration for the Behavior
      * @return void
      */
-    public function setup(Model $model, $config = array())
+    public function initialize(array $config)
     {
-        if (!isset($this->settings[$model->alias])) {
-            $this->settings[$model->alias] = $this->_defaultSettings;
-        }
+        parent::initialize($config);
 
-        foreach ($model->transitions as $transition => $states) {
+        foreach ($this->getTable()->transitions as $transition => $states) {
             foreach ($states as $stateFrom => $stateTo) {
                 $this->_addAvailableState(Inflector::camelize($stateFrom));
                 $this->_addAvailableState(Inflector::camelize($stateTo));
@@ -81,7 +88,7 @@ class StateMachineBehavior extends Behavior
                              'is' . Inflector::camelize($stateFrom),
                              'is' . Inflector::camelize($stateTo)
                          ) as $methodName) {
-                    if (!$this->_hasMethod($model, $methodName)) {
+                    if (!$this->_hasMethod($methodName)) {
                         $this->mapMethods['/' . $methodName . '$/'] = 'is';
                     }
                 }
@@ -101,55 +108,53 @@ class StateMachineBehavior extends Behavior
      * $data = $this->Vehicle->myMethod();
      * }}}
      *
-     * @param Model $model The model being acted on
      * @param string $method The method na,e
      * @param string $cb The callback to execute
-     * @throws InvalidArgumentException If the method already is registered
+     * @throws \InvalidArgumentException If the method already is registered
      * @return void
      */
-    public function addMethod(Model $model, $method, $cb)
+    public function addMethod($method, $cb)
     {
-        if ($this->_hasMethod($model, $method)) {
+        if ($this->_hasMethod($method)) {
             throw new InvalidArgumentException("A method with the same name is already registered");
         }
 
-        $this->settings[$model->alias]['methods'][$method] = $cb;
+        $methods = $this->getConfig('methods');
+        $methods[$method] = $cb;
         $this->mapMethods['/' . $method . '/'] = 'handleMethodCall';
 
         // force model to re-load Behavior, so that the mapMethods are working correctly
-        $model->Behaviors->load('Statemachine.StateMachine');
+        $this->getTable()->behaviors()->load('Tsmsogn/StateMachine.StateMachine');
     }
 
     /**
      * Handles user defined method calls, which are implemented using closures.
      *
-     * @param Model $model The model being acted on
      * @param string $method The method name
      * @return mixed The return value of the callback, or an array if the method doesn't exist
      */
-    public function handleMethodCall(Model $model, $method)
+    public function handleMethodCall($method)
     {
-        if (!isset($this->settings[$model->alias]['methods'][$method])) {
+        $methods = $this->getConfig('methods');
+        if (!isset($methods[$method])) {
             return array('unhandled');
         }
-        return call_user_func_array($this->settings[$model->alias]['methods'][$method], func_get_args());
+        return call_user_func_array($methods[$method], func_get_args());
     }
 
     /**
-     * Updates the model's state when a $model->save() call is performed
+     * Updates the entity's state when a $this->getTable()->save() call is performed
      *
-     * @param Model $model The model being acted on
-     * @param bool $created Whether or not the model was created
-     * @param array $options Options passed to save
-     * @return bool
+     * @param Event $event
+     * @param EntityInterface $entity
+     * @param ArrayObject $options
      */
-    public function afterSave(Model $model, $created, $options = array())
+    public function afterSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
-        if ($created) {
-            $model->saveField('state', $model->initialState);
+        if ($entity->isNew()) {
+            $entity->{$this->_getStateField()} = $this->_getInitialState();
+            $this->getTable()->save($entity);
         }
-
-        return true;
     }
 
     /**
@@ -200,28 +205,6 @@ class StateMachineBehavior extends Behavior
     }
 
     /**
-     * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
-     *
-     * @param Model $model The model being acted on
-     * @param string $type find type (ref. CakeModel)
-     * @param array|string $state The state to find. this will be checked for validity.
-     * @param array $params Regular $params array for CakeModel->find
-     * @return array|bool|null            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
-     * @author Frode Marton Meling
-     */
-    protected function _findByState(Model $model, $type, $state = null, $params = array())
-    {
-        if ($state === null || !$this->_validState($state)) {
-            return false;
-        }
-
-        if (is_array($state) || Inflector::camelize($state) != 'All') {
-            $params['conditions']["{$model->alias}.state"] = $state;
-        }
-        return $model->find($type, $params);
-    }
-
-    /**
      * This function will add all available (runnable) transitions on a model and add it to the dataArray given to the function.
      *
      * @param Model $model The model being acted on
@@ -251,54 +234,6 @@ class StateMachineBehavior extends Behavior
     }
 
     /**
-     * Finds all records in a specific state. Supports additional conditions, but will overwrite conditions with state
-     *
-     * @param Model $model The model being acted on
-     * @param array|string $state The state to find. this will be checked for validity.
-     * @param array $params Regular $params array for CakeModel->find
-     * @param bool $withTransitions Whether or not to add available transitions to records, in its current state
-     * @param string $role The rule executing the transition
-     * @return array Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
-     * @author Frode Marton Meling
-     */
-    public function findAllByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null)
-    {
-        $modelRows = $this->_findByState($model, 'all', $state, $params);
-        return ($withTransitions) ? $this->_addTransitionsToArray($model, $modelRows, $role) : $modelRows;
-    }
-
-    /**
-     * Finds first record in a specific state. Supports additional conditions, but will overwrite conditions with state
-     *
-     * @param Model $model The model being acted on
-     * @param array|string $state The state to find. this will be checked for validity.
-     * @param array $params Regular $params array for CakeModel->find
-     * @param bool $withTransitions Whether or not to add available transitions to records, in its current state
-     * @param string $role The rule executing the transition
-     * @return array Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
-     * @author Frode Marton Meling
-     */
-    public function findFirstByState(Model $model, $state = null, $params = array(), $withTransitions = true, $role = null)
-    {
-        $modelRow = $this->_findByState($model, 'first', $state, $params);
-        return ($withTransitions) ? $this->_addTransitionsToArray($model, ($modelRow) ? array($modelRow) : false, $role) : $modelRow;
-    }
-
-    /**
-     * Finds count of records in a specific state. Supports additional conditions, but will overwrite conditions with state
-     *
-     * @param Model $model The model being acted on
-     * @param array|string $state The state to find. this will be checked for validity.
-     * @param array $params Regular $params array for CakeModel->find
-     * @return array            Returns datarray of $model records or false. Will return false if state is not set, or state is not configured in model
-     * @author Frode Marton Meling
-     */
-    public function findCountByState(Model $model, $state = null, $params = array())
-    {
-        return $this->_findByState($model, 'count', $state, $params);
-    }
-
-    /**
      * Allows moving from one state to another.
      * {{{
      * $this->Model->transition('shift_gear');
@@ -306,51 +241,42 @@ class StateMachineBehavior extends Behavior
      * $this->Model->shiftGear();
      * }}}
      *
-     * @param Model $model The model being acted on
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @param string $transition The transition being initiated
-     * @param int $id table id field to find object
      * @param string $role The rule executing the transition
      * @param bool $validate whether or not validation being checked
      * @return bool Returns true if the transition be executed, otherwise false
      */
-    public function transition(Model $model, $transition, $id = null, $role = null, $validate = true)
+    public function transition(StateMachineEntityInterface $entity, $transition, $role = null, $validate = true)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
         $transition = Inflector::underscore($transition);
-        $state = $this->getStates($model, $transition);
-        if (!$state || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
+        $state = $this->getStates($entity, $transition);
+        if (!$state || $this->_checkRoleAgainstRule($entity, $role, $transition) === false) {
             return false;
         }
 
-        $this->_callTransitionListeners($model, $transition, 'before');
+        $this->_callTransitionListeners($entity, $transition, 'before');
 
-        $model->read(null, $model->id);
-        $model->set('previous_state', $model->getCurrentState());
-        $model->set('last_transition', $transition);
-        $model->set('last_role', $role);
-        $model->set('state', $state);
-        $retval = $model->save(null, $validate);
+        $entity->{$this->_getPreviousStateField()} = $entity->getCurrentState();
+        $entity->{$this->_getLastTransitionField()} = $transition;
+        $entity->{$this->_getLastRoleField()} = $role;
+        $entity->{$this->_getStateField()} = $state;
+        $retval = $this->getTable()->save($entity, ['validate' => $validate]);
 
         if ($retval) {
-            $this->_callTransitionListeners($model, $transition, 'after');
+            $this->_callTransitionListeners($entity, $transition, 'after');
 
             $stateListeners = array();
-            if (isset($this->settings[$model->alias]['state_listeners'][$state])) {
-                $stateListeners = $this->settings[$model->alias]['state_listeners'][$state];
+            if (isset($this->settings[$entity->alias]['state_listeners'][$state])) {
+                $stateListeners = $this->settings[$entity->alias]['state_listeners'][$state];
             }
 
             foreach (array(
                          'onState' . Inflector::camelize($state),
                          'onStateChange'
                      ) as $method) {
-                if (method_exists($model, $method)) {
-                    $stateListeners[] = array($model, $method);
+                if (method_exists($entity, $method)) {
+                    $stateListeners[] = array($entity, $method);
                 }
             }
 
@@ -365,45 +291,28 @@ class StateMachineBehavior extends Behavior
     /**
      * Checks whether the state machine is in the given state
      *
-     * @param Model $model The model being acted on
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @param string $state The state being checked
-     * @param int $id The id of the item to check
      * @return bool whether or not the state machine is in the given state
-     * @throws BadMethodCallException when method does not exists
      */
-    public function is(Model $model, $state, $id = null)
+    public function is(StateMachineEntityInterface $entity, $state)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
-        return $this->getCurrentState($model) === $this->_deFormalizeMethodName($state);
+        return $entity->getCurrentState() === $this->_deFormalizeMethodName($state);
     }
 
     /**
      * Checks whether or not the machine is able to perform transition, in its current state
      *
-     * @param Model $model The model being acted on
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @param string $transition The transition being checked
-     * @param int $id The id of the item to check
      * @param string $role The role which should execute the transition
      * @return bool whether or not the machine can perform the transition
-     * @throws BadMethodCallException when method does not exists
+     * @throws \BadMethodCallException when method does not exists
      */
-    public function can(Model $model, $transition, $id = null, $role = null)
+    public function can(StateMachineEntityInterface $entity, $transition, $role = null)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
         $transition = $this->_deFormalizeMethodName($transition);
-        if (!$this->getStates($model, $transition) || $this->_checkRoleAgainstRule($model, $role, $transition) === false) {
+        if (!$this->getStates($entity, $transition) || $this->_checkRoleAgainstRule($entity, $role, $transition) === false) {
             return false;
         }
 
@@ -414,16 +323,16 @@ class StateMachineBehavior extends Behavior
      * Registers a callback function to be called when the machine leaves one state.
      * The callback is fired either before or after the given transition.
      *
-     * @param Model $model The model being acted on
      * @param string $transition The transition to listen to
      * @param string $triggerType Either before or after
      * @param string $cb The callback function that will be called
      * @param bool $bubble Whether or not to bubble other listeners
      * @return void
      */
-    public function on(Model $model, $transition, $triggerType, $cb, $bubble = true)
+    public function on($transition, $triggerType, $cb, $bubble = true)
     {
-        $this->settings[$model->alias]['transition_listeners'][Inflector::underscore($transition)][$triggerType][] = array(
+        $transition_listeners = $this->getConfig('transition_listeners');
+        $transition_listeners[Inflector::underscore($transition)][$triggerType][] = array(
             'cb' => $cb,
             'bubble' => $bubble
         );
@@ -433,33 +342,33 @@ class StateMachineBehavior extends Behavior
      * Registers a callback that will be called when the state machine enters the given
      * state.
      *
-     * @param Model $model The model being acted on
      * @param string $state The state which the machine should enter
      * @param string $cb The callback function that will be called
      * @return void
      */
-    public function when(Model $model, $state, $cb)
+    public function when($state, $cb)
     {
-        $this->settings[$model->alias]['state_listeners'][Inflector::underscore($state)][] = $cb;
+        $state_listeners = $this->getConfig('state_listeners');
+        $state_listeners[Inflector::underscore($state)][] = $cb;
     }
 
     /**
      * Returns the states the machine would be in, after the given transition
      *
-     * @param Model $model The model being acted on
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @param string $transition The transition name
      * @return mixed False if the transition doesnt yield any states, or an array of states
      */
-    public function getStates(Model $model, $transition)
+    public function getStates(StateMachineEntityInterface $entity, $transition)
     {
-        if (!isset($model->transitions[$transition])) {
+        if (!isset($this->getTable()->transitions[$transition])) {
             // transition doesn't exist
             return false;
         }
 
         // get the states the machine can move from and to
-        $states = $model->transitions[$transition];
-        $currentState = $model->getCurrentState();
+        $states = $this->getTable()->transitions[$transition];
+        $currentState = $entity->getCurrentState();
 
         if (isset($states[$currentState])) {
             return $states[$currentState];
@@ -475,77 +384,45 @@ class StateMachineBehavior extends Behavior
     /**
      * Returns the current state of the machine
      *
-     * @param Model $model The model being acted on
-     * @param int $id The id of the item to check
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @return bool|false|mixed|string The current state of the machine
      */
-    public function getCurrentState(Model $model, $id = null)
+    public function getCurrentState(StateMachineEntityInterface $entity)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
-        return (($model->field('state') != null)) ? $model->field('state') : $model->initialState;
+        return (($entity->getCurrentState() != null)) ? $entity->getCurrentState() : $this->_getInitialState();
     }
 
     /**
      * Returns the previous state of the machine
      *
-     * @param Model $model The model being acted on
-     * @param int $id The id of the item to check
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @return bool|false|string The previous state of the machine
      */
-    public function getPreviousState(Model $model, $id = null)
+    public function getPreviousState(StateMachineEntityInterface $entity)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
-        return $model->field('previous_state');
+        return $entity->previous_state;
     }
 
     /**
      * Returns the last transition ran
      *
-     * @param Model $model The model being acted on
-     * @param int $id The id of the item to check
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @return bool|false|string The transition last ran of the machine
      */
-    public function getLastTransition(Model $model, $id = null)
+    public function getLastTransition(StateMachineEntityInterface $entity)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
-        return $model->field('last_transition');
+        return $entity->last_transition;
     }
 
     /**
      * Returns the role that ran the last transition
      *
-     * @param Model $model The model being acted on
-     * @param int $id The id of the item to check
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @return bool|false|string The role that last ran a transition of the machine
      */
-    public function getLastRole(Model $model, $id = null)
+    public function getLastRole(StateMachineEntityInterface $entity)
     {
-        if ($id === null) {
-            $id = $model->getID();
-        }
-        if ($id === false) {
-            return false;
-        }
-        $model->id = $id;
-        return $model->field('last_role');
+        return $entity->last_role;
     }
 
     /**
@@ -556,10 +433,9 @@ class StateMachineBehavior extends Behavior
      * }}}
      * Assuming that the contents are written to the file fsm.gv
      *
-     * @param Model $model The model being acted on
      * @return string The contents of the graphviz file
      */
-    public function toDot(Model $model)
+    public function toDot()
     {
         $digraph = <<<EOT
 digraph finite_state_machine {
@@ -569,7 +445,7 @@ digraph finite_state_machine {
 
 EOT;
 
-        foreach ($model->transitions as $transition => $states) {
+        foreach ($this->getTable()->transitions as $transition => $states) {
             foreach ($states as $stateFrom => $stateTo) {
                 $digraph .= sprintf("\t%s -> %s [ label = \"%s\" ];\n", $stateFrom, $stateTo, $transition);
             }
@@ -665,13 +541,12 @@ EOT;
      * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
      * I did not find a php method for this, so made it myself
      *
-     * @param Model $model The model being acted on
      * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
      * @return Array Returns an array of roles like array('role1', 'role2'...)
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Add separate tests @codingStandardsIgnoreLine
      */
-    public function getAllRoles(Model $model, $roles)
+    public function getAllRoles($roles)
     {
         $arrayToReturn = array();
         foreach ($roles as $role => $option) {
@@ -683,14 +558,13 @@ EOT;
     /**
      * This function is used to add transitions to Array. This tests for conditions and makes sure duplicates are not added.
      *
-     * @param Model $model The model being acted on
      * @param array $data An array of a transition to be added
      * @param array $prepareArray The current array to populate
      * @return mixed
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Move this to protected, Needs a reimplementation of the function in test to make it public for testing @codingStandardsIgnoreLine
      */
-    public function addToPrepareArray(Model $model, $data, $prepareArray)
+    public function addToPrepareArray($data, $prepareArray)
     {
         if (!is_array($data)) {
             return false;
@@ -862,15 +736,14 @@ EOT;
      * Checks whether or not the given role may perform the transition change.
      * The callback in 'depends' must be a valid model method.
      *
-     * @param Model $model The model being acted on
      * @param string $role The role executing the transition change
      * @param string $transition The transition
-     * @throws InvalidArgumentException if the transition require it be executed by a rule, and none is given
+     * @throws \InvalidArgumentException if the transition require it be executed by a rule, and none is given
      * @return bool Whether or not the role may perform the action
      */
-    protected function _checkRoleAgainstRule(Model $model, $role, $transition)
+    protected function _checkRoleAgainstRule($role, $transition)
     {
-        if (!isset($model->transitionRules[$transition])) {
+        if (!isset($this->getTable()->transitionRules[$transition])) {
             return null;
         }
 
@@ -878,22 +751,23 @@ EOT;
             throw new InvalidArgumentException('The transition ' . $transition . ' requires a role');
         }
 
-        if (!in_array($role, $model->transitionRules[$transition]['role'])) {
+        if (!in_array($role, $this->getTable()->transitionRules[$transition]['role'])) {
             return false;
         }
 
-        if (!isset($model->transitionRules[$transition]['depends'])) {
+        if (!isset($this->getTable()->transitionRules[$transition]['depends'])) {
             return true;
         }
 
-        $callback = Inflector::variable($model->transitionRules[$transition]['depends']);
+        $callback = Inflector::variable($this->getTable()->transitionRules[$transition]['depends']);
 
-        if ($this->_hasMethod($model, $callback)) {
+        if ($this->_hasMethod($callback)) {
             // Fix: if the method is supplied as an anonymous callback, we cannot call
             // it from the model directly
-            $res = $this->settings[$model->alias]['methods'][$callback]($role);
+            $methods = $this->getConfig('methods');
+            $res = $methods[$callback]($role);
         } else {
-            $res = call_user_func(array($model, $callback), $role);
+            $res = call_user_func(array($this->getTable(), $callback), $role);
         }
 
         return $res;
@@ -907,14 +781,14 @@ EOT;
      * - onBefore<Transition>    i.e. onBeforePark()
      * - onAfter<Transition>    i.e. onAfterPark()
      *
-     * @param Model $model The model being acted on
+     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
      * @param string $transition The transition name
      * @param string $triggerType Either before or after
      * @return void
      */
-    protected function _callTransitionListeners(Model $model, $transition, $triggerType = 'after')
+    protected function _callTransitionListeners(StateMachineEntityInterface $entity, $transition, $triggerType = 'after')
     {
-        $transitionListeners = &$this->settings[$model->alias]['transition_listeners'];
+        $transitionListeners = $this->getConfig('transition_listeners');
         $listeners = $transitionListeners['transition'][$triggerType];
 
         if (isset($transitionListeners[$transition][$triggerType])) {
@@ -925,16 +799,16 @@ EOT;
                      'on' . Inflector::camelize($triggerType . 'Transition'),
                      'on' . Inflector::camelize($triggerType . $transition)
                  ) as $method) {
-            if (method_exists($model, $method)) {
+            if (method_exists($entity, $method)) {
                 $listeners[] = array(
-                    'cb' => array($model, $method),
+                    'cb' => array($entity, $method),
                     'bubble' => true
                 );
             }
         }
 
-        $currentState = $this->getCurrentState($model);
-        $previousState = $this->getPreviousState($model);
+        $currentState = $entity->getCurrentState();
+        $previousState = $entity->getPreviousState();
 
         foreach ($listeners as $cb) {
             call_user_func_array($cb['cb'], array($currentState, $previousState, $transition));
@@ -960,12 +834,52 @@ EOT;
     /**
      * Checks whether or not a user-defined method exists in the Behavior
      *
-     * @param Model $model The model being acted on
      * @param string $method The method's name
      * @return bool True if the method exists, false otherwise
      */
-    protected function _hasMethod(Model $model, $method)
+    protected function _hasMethod($method)
     {
-        return isset($this->settings[$model->alias]['methods'][$method]) || isset($this->mapMethods['/' . $method . '/']);
+        $methods = $this->getConfig('methods');
+        return isset($methods[$method]) || isset($this->mapMethods['/' . $method . '/']);
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function _getPreviousStateField()
+    {
+        return $this->getConfig('previous_state_field');
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function _getLastTransitionField()
+    {
+        return $this->getConfig('last_transition_field');
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function _getLastRoleField()
+    {
+        return $this->getConfig('last_role_field');
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function _getStateField()
+    {
+        return $this->getConfig('state_field');
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function _getInitialState()
+    {
+        return $this->getConfig('initial_state');
     }
 }
