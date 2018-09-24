@@ -155,14 +155,13 @@ class StateMachineBehavior extends Behavior
     /**
      * returns all transitions defined in model
      *
-     * @param Model $model The model being acted on
      * @return array array of transitions
      * @author Frode Marton Meling
      */
-    public function getAllTransitions($model)
+    public function getAllTransitions()
     {
         $transitionArray = array();
-        foreach ($model->transitions as $transition => $data) {
+        foreach ($this->getTable()->transitions as $transition => $data) {
             $transitionArray[] = $transition;
         }
         return $transitionArray;

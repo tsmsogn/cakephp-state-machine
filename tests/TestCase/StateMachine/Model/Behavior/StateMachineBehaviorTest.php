@@ -3,6 +3,7 @@
 namespace Tsmsogn\StateMachine\Test\TestCase\Model\Behavior;
 
 use Cake\ORM\Table;
+use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 
 class BaseVehicle extends Table
@@ -10,9 +11,12 @@ class BaseVehicle extends Table
 
     public $useTable = 'vehicles';
 
-    public $actsAs = array('StateMachine.StateMachine');
-
     public $initialState = 'parked';
+
+    public function initialize(array $config)
+    {
+        $this->addBehavior('Tsmsogn/StateMachine.StateMachine');
+    }
 
     public $transitions = array(
         'ignite' => array(
@@ -153,8 +157,9 @@ class StateMachineBehaviorTest extends TestCase
     {
         parent::setUp();
 
-        $this->Vehicle = new Vehicle(1);
-        $this->StateMachine = $this->Vehicle->Behaviors->StateMachine;
+        $this->Vehicle = TableRegistry::get('Vehicle', [
+            'className' => 'Tsmsogn\StateMachine\Test\TestCase\Model\Behavior\Vehicle'
+        ]);
     }
 
     public function testGetAllTransitions()
