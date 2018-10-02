@@ -539,8 +539,8 @@ EOT;
      * This helperfunction fetches out all roles from an array of roles with options. Note that this is a ('role' => $options) array
      * I did not find a php method for this, so made it myself
      *
-     * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
-     * @return Array Returns an array of roles like array('role1', 'role2'...)
+     * @param array $roles This is just an array of roles like array('role1', 'role2'...)
+     * @return array Returns an array of roles like array('role1', 'role2'...)
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Add separate tests @codingStandardsIgnoreLine
      */
@@ -598,8 +598,8 @@ EOT;
      * This helperfunction checks if all roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
      * I did not find a php method for this, so made it myself
      *
-     * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
-     * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+     * @param array $roles This is just an array of roles like array('role1', 'role2'...)
+     * @param array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
      * @return bool Returns true if all roles are present, otherwise false
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Add separate tests @codingStandardsIgnoreLine
@@ -618,8 +618,8 @@ EOT;
      * This helperfunction checks if any of the roles in an array (roles) is present in $allArrays. Note that this is a ('role' => $options) array
      * I did not find a php method for this, so made it myself
      *
-     * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
-     * @param Array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
+     * @param array $roles This is just an array of roles like array('role1', 'role2'...)
+     * @param array $allRoles This is the array to test on. This is a multidimentional array like array('role1' => array('of' => 'options'), 'role2' => array('of' => 'options') )
      * @return bool Returns true if just one of the roles are present, otherwise false
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Add separate tests @codingStandardsIgnoreLine
@@ -639,8 +639,8 @@ EOT;
      * This helperfunction adds a role to an array. It checks for duplicates and only adds if it is not already in array
      * If also checks that the resultArray is valid and that there are roles there to begin with
      *
-     * @param Array $roles This is just an array of roles like array('role1', 'role2'...)
-     * @param Array &$resultArray This function writes to this parameter by reference
+     * @param array $roles This is just an array of roles like array('role1', 'role2'...)
+     * @param array &$resultArray This function writes to this parameter by reference
      * @return bool Returns true if added, otherwise false
      * @author Frode Marton Meling <fm@saltship.com>
      * @todo Add separate tests @codingStandardsIgnoreLine
