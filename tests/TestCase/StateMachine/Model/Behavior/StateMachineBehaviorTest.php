@@ -419,8 +419,6 @@ class StateMachineBehaviorTest extends TestCase
 
     public function testAddToPrepareArrayNoRoles()
     {
-        $this->Vehicle = new Vehicle(1);
-
         $dataArrayToFill = array();
         $dataToAdd = array(
             'stateFrom' => 'initial',
@@ -470,7 +468,6 @@ class StateMachineBehaviorTest extends TestCase
 
     public function testAddToPrepareArrayWithRoles()
     {
-        $this->Vehicle = new Vehicle(1);
         $expected = $dataArrayToFill = array();
 
         // Case 1 - adding role without depends, we reset the data
@@ -526,7 +523,6 @@ class StateMachineBehaviorTest extends TestCase
 
     public function testAddToPrepareArrayWithDependsAndRoles()
     {
-        $this->Vehicle = new Vehicle(1);
         $expected = $dataArrayToFill = array();
 
         // Case 1 - adding role without depends, we reset the data

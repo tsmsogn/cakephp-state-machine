@@ -458,36 +458,35 @@ EOT;
      * This method prepares an array for each transition in the statemachine making it easier to iterate throug the machine for
      * output to various formats
      *
-     * @param Model $model The model being acted on
      * @param array $roles The role(s) executing the transition change. with an options array.
      *                               'role' => array('color' => color of the arrows)
      *                               In the future many more Graphviz options can be added
      * @return array      returns an array of all transitions
      * @author  Frode Marton Meling <fm@saltship.com>
      */
-    public function prepareForDotWithRoles(Model $model, $roles)
+    public function prepareForDotWithRoles($roles)
     {
         $preparedForDotArray = array();
-        foreach ($model->transitions as $transition => $states) {
+        foreach ($this->getTable()->transitions as $transition => $states) {
             foreach ($roles as $role => $options) {
                 foreach ($states as $stateFrom => $stateTo) {
                     // if roles are not defined in transitionRules we add or if roles are defined, at least one needs to be present
-                    if (!isset($model->transitionRules[$transition]['role']) || (isset($model->transitionRules[$transition]['role']) && $this->_containsAnyRoles($model->transitionRules[$transition]['role'], $roles))) {
+                    if (!isset($this->getTable()->transitionRules[$transition]['role']) || (isset($this->getTable()->transitionRules[$transition]['role']) && $this->_containsAnyRoles($this->getTable()->transitionRules[$transition]['role'], $roles))) {
                         $dataToPrepare = array(
                             'stateFrom' => $stateFrom,
                             'stateTo' => $stateTo,
                             'transition' => $transition
                         );
-                        if (isset($model->transitionRules[$transition]['role'])) {
-                            if (in_array($role, $model->transitionRules[$transition]['role'])) {
+                        if (isset($this->getTable()->transitionRules[$transition]['role'])) {
+                            if (in_array($role, $this->getTable()->transitionRules[$transition]['role'])) {
                                 $dataToPrepare['roles'] = array($role);
                             }
                         }
-                        if (isset($model->transitionRules[$transition]['depends'])) {
-                            $dataToPrepare['depends'] = $model->transitionRules[$transition]['depends'];
+                        if (isset($this->getTable()->transitionRules[$transition]['depends'])) {
+                            $dataToPrepare['depends'] = $this->getTable()->transitionRules[$transition]['depends'];
                         }
                         // we do not add if role is given as transitionRule, but part is not in it.
-                        $preparedForDotArray = $this->addToPrepareArray($model, $dataToPrepare, $preparedForDotArray);
+                        $preparedForDotArray = $this->addToPrepareArray($this->getTable(), $dataToPrepare, $preparedForDotArray);
                     }
                 }
             }
@@ -504,7 +503,6 @@ EOT;
      * }}}
      * Assuming that the contents are written to the file fsm.gv
      *
-     * @param Model $model The model being acted on
      * @param array $roles The role(s) executing the transition change. with an options array.
      *                                 'role' => array('color' => color of the arrows)
      *                                 In the future many more Graphviz options can be added
@@ -514,11 +512,11 @@ EOT;
      * @return string The contents of the graphviz file
      * @author Frode Marton Meling <fm@saltship.com>
      */
-    public function createDotFileForRoles(Model $model, $roles, $dotOptions)
+    public function createDotFileForRoles($roles, $dotOptions)
     {
-        $transitionsArray = $this->prepareForDotWithRoles($model, $roles);
+        $transitionsArray = $this->prepareForDotWithRoles($roles);
         $digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n%s}\n";
-        $activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState($model)) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
+        $activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState()) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
 
         $node = "\t\"%s\" -> \"%s\" [ style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\" %s];\n";
         $dotNodes = "";
@@ -533,7 +531,7 @@ EOT;
                 (isset($transition['roles']) && count($transition['roles']) == 1) ? "color = \"" . $roles[$transition['roles'][0]]['color'] . "\"" : ''//,
             );
         }
-        $graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for ' . Inflector::humanize($model->alias) . ' role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($model, $roles))), $activeState, $dotNodes);
+        $graph = sprintf($digraph, $dotOptions['color'], 'Statemachine for ' . Inflector::humanize($this->getTable()->alias) . ' role(s) : ' . Inflector::humanize(implode(', ', $this->getAllRoles($this->getTable(), $roles))), $activeState, $dotNodes);
         return $graph;
     }
 
