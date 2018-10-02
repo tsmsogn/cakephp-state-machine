@@ -435,7 +435,7 @@ class StateMachineBehaviorTest extends TestCase
         // Case 2 - adding first array
         $expected[] = $dataToAdd;
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 3 - adding second array
         $dataToAdd = array(
@@ -446,11 +446,11 @@ class StateMachineBehaviorTest extends TestCase
         );
         $expected[] = $dataToAdd;
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 4 - adding same array should not increase
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 5 - adding depends
         $dataToAdd = array(
@@ -461,11 +461,11 @@ class StateMachineBehaviorTest extends TestCase
         );
         $expected[] = $dataToAdd;
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 6 - adding same depends should skip it
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
     }
 
     public function testAddToPrepareArrayWithRoles()
@@ -483,11 +483,11 @@ class StateMachineBehaviorTest extends TestCase
         $dataArrayToFill[] = $expected[] = $dataToAdd;
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
         //debug($dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 2 - adding same role twice shoud not duplicate
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 3 - Adding same state&Transition but with additional role
         $dataToAdd = array(
@@ -504,7 +504,7 @@ class StateMachineBehaviorTest extends TestCase
             'roles' => array('role1', 'role2')
         );
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 4 - Adding same state&Transition but with additional role
         $dataToAdd = array(
@@ -521,7 +521,7 @@ class StateMachineBehaviorTest extends TestCase
             'roles' => array('role1', 'role2', 'role3', 'role4')
         );
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
     }
 
     public function testAddToPrepareArrayWithDependsAndRoles()
@@ -540,11 +540,11 @@ class StateMachineBehaviorTest extends TestCase
         $dataArrayToFill[] = $expected[] = $dataToAdd;
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
         //debug($dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 2 - adding same role twice shoud not duplicate
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 3 - Adding same state&Transition&depends but with additional role
         $dataToAdd = array(
@@ -563,7 +563,7 @@ class StateMachineBehaviorTest extends TestCase
             'roles' => array('role1', 'role2')
         );
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 4 - Adding same state&Transition&depends but with additional role
         $dataToAdd = array(
@@ -582,7 +582,7 @@ class StateMachineBehaviorTest extends TestCase
             'roles' => array('role1', 'role2', 'role3', 'role4')
         );
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
 
         // Case 5 - Adding same state&Transition&depends but with different depends
         $dataToAdd = array(
@@ -600,7 +600,7 @@ class StateMachineBehaviorTest extends TestCase
             'roles' => array('role3', 'role4')
         );
         $dataArrayToFill = $this->Vehicle->addToPrepareArray($dataToAdd, $dataArrayToFill);
-        $this->assertEqual($expected, $dataArrayToFill);
+        $this->assertEquals($expected, $dataArrayToFill);
     }
 
     public function testToDot()
