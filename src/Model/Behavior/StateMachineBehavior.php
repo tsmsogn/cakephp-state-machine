@@ -41,6 +41,7 @@ class StateMachineBehavior extends Behavior
         ),
         'state_listeners' => array(),
         'methods' => array(),
+        'autofill_initial_state' => true,
         'initial_state' => null,
         'state_field' => 'state',
         'previous_state_field' => 'previous_state',
@@ -151,6 +152,9 @@ class StateMachineBehavior extends Behavior
      */
     public function afterSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
+        if (!$this->getConfig('autofill_initial_state')) {
+            return;
+        }
         if ($entity->isNew()) {
             $entity->{$this->_getStateField()} = $this->_getInitialState();
             $this->getTable()->save($entity);
