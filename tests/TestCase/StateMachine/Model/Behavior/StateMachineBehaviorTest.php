@@ -355,9 +355,10 @@ class StateMachineBehaviorTest extends TestCase
         $this->Vehicle->is($vehicle, 'foobar');
     }
 
-    public function whenParked()
+    public function testWhenParked()
     {
-        $this->assertEquals('parked', $this->Vehicle->getCurrentState());
+        $vehicle = $this->Vehicle->get(1);
+        $this->assertEquals('parked', $vehicle->getCurrentState());
     }
 
     public function testWhenMethods()
