@@ -12,13 +12,13 @@ class BaseVehicle extends Table
 
     public $useTable = 'vehicles';
 
-    public $initialState = 'parked';
-
     public function initialize(array $config)
     {
         $this->setTable('vehicles');
         $this->setPrimaryKey('id');
-        $this->addBehavior('Tsmsogn/StateMachine.StateMachine');
+        $this->addBehavior('Tsmsogn/StateMachine.StateMachine', [
+            'initial_state' => 'parked'
+        ]);
         $this->setEntityClass('Tsmsogn\StateMachine\Test\Model\Entity\Vehicle');
     }
 
@@ -420,7 +420,7 @@ class StateMachineBehaviorTest extends TestCase
         $vehicle = $this->Vehicle->newEntity();
         $vehicle->title = 'Toybota';
         $this->Vehicle->save($vehicle);
-        $this->assertEquals($this->Vehicle->initialState, $vehicle->getCurrentState());
+        $this->assertEquals('parked', $vehicle->getCurrentState());
     }
 
     public function testAddToPrepareArrayNoRoles()
