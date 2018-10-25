@@ -382,50 +382,6 @@ class StateMachineBehavior extends Behavior
     }
 
     /**
-     * Returns the current state of the machine
-     *
-     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
-     * @return bool|false|mixed|string The current state of the machine
-     */
-    public function getCurrentState(StateMachineEntityInterface $entity)
-    {
-        return (($entity->getCurrentState() != null)) ? $entity->getCurrentState() : $this->_getInitialState();
-    }
-
-    /**
-     * Returns the previous state of the machine
-     *
-     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
-     * @return bool|false|string The previous state of the machine
-     */
-    public function getPreviousState(StateMachineEntityInterface $entity)
-    {
-        return $entity->previous_state;
-    }
-
-    /**
-     * Returns the last transition ran
-     *
-     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
-     * @return bool|false|string The transition last ran of the machine
-     */
-    public function getLastTransition(StateMachineEntityInterface $entity)
-    {
-        return $entity->last_transition;
-    }
-
-    /**
-     * Returns the role that ran the last transition
-     *
-     * @param \Tsmsogn\StateMachine\Model\Entity\StateMachineEntityInterface $entity
-     * @return bool|false|string The role that last ran a transition of the machine
-     */
-    public function getLastRole(StateMachineEntityInterface $entity)
-    {
-        return $entity->last_role;
-    }
-
-    /**
      * Simple method to return contents for a GV file, that
      * can be made into graphics by:
      * {{{
@@ -516,7 +472,7 @@ EOT;
     {
         $transitionsArray = $this->prepareForDotWithRoles($roles);
         $digraph = "digraph finite_state_machine {\n\tfontsize=12;\n\tnode [shape = oval, style=filled, color = \"%s\"];\n\tstyle=filled;\n\tlabel=\"%s\"\n%s\n%s}\n";
-        $activeState = "\t" . "\"" . Inflector::humanize($this->getCurrentState()) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
+        $activeState = "\t" . "\"" . Inflector::humanize($this->_getInitialState()) . "\"" . " [ color = " . $dotOptions['activeColor'] . " ];";
 
         $node = "\t\"%s\" -> \"%s\" [ style = bold, fontsize = 9, arrowType = normal, label = \"%s %s%s\" %s];\n";
         $dotNodes = "";
